@@ -1,0 +1,176 @@
+{
+  "title": "PL CHAT File Transfer Benchmark V2",
+  "status": "failed",
+  "startedAt": "2026-06-29T01:38:16.745Z",
+  "finishedAt": "2026-06-29T01:42:18.106Z",
+  "route": "quick_tunnel",
+  "baseUrl": "https://chargers-secretariat-hurricane-presently.trycloudflare.com",
+  "user": {
+    "id": "1d9257ce71e0cca9d7aa76c8",
+    "name": "sai sai"
+  },
+  "roomId": "0301efb4de2f9146b810546e",
+  "configuration": {
+    "sizesMb": [
+      1024
+    ],
+    "runs": 1,
+    "strategy": "auto",
+    "downloadMode": "signed",
+    "realLargeTransfer": false,
+    "maxDefaultRealTransferMb": 1024,
+    "server": {
+      "ok": true,
+      "service": "",
+      "appPublicUrl": "",
+      "uploadMaxMb": 20480,
+      "directUploadMaxMb": 100,
+      "fileUploadMode": "universal",
+      "filePreviewMode": "safe-only",
+      "enableChunkUpload": true,
+      "enableMultipartUpload": true,
+      "enableResumableUpload": true,
+      "enablePersistentUploadQueue": true,
+      "enableSignedDirectDownload": true,
+      "s3PublicTransferReady": true,
+      "enableDesktopParallelDownload": true,
+      "signedDownloadExpiresMinutes": 15,
+      "chunkSizeMb": 64,
+      "chunkSizeBytes": 67108864,
+      "multipartMinFileSizeMb": 100,
+      "multipartThresholdBytes": 104857600,
+      "multipartDefaultPartSizeMb": 64,
+      "multipartMinPartSizeMb": 16,
+      "multipartMaxPartSizeMb": 128,
+      "maxMultipartUploadMb": 20480,
+      "uploadQueueConcurrency": 3,
+      "uploadRetryLimit": 3,
+      "chunkUploadExpiresHours": 72,
+      "unauthenticatedHealth": {
+        "ok": true,
+        "service": "pl-chat-internal-workspace",
+        "generatedAt": "2026-06-29T01:38:18.710Z"
+      }
+    }
+  },
+  "capabilityChecks": [
+    {
+      "name": "benchmark route classified",
+      "pass": true,
+      "detail": {
+        "route": "quick_tunnel",
+        "baseUrl": "https://chargers-secretariat-hurricane-presently.trycloudflare.com"
+      }
+    },
+    {
+      "name": "health endpoint reachable",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "service": "",
+        "appPublicUrl": "",
+        "uploadMaxMb": 20480,
+        "directUploadMaxMb": 100,
+        "fileUploadMode": "universal",
+        "filePreviewMode": "safe-only",
+        "enableChunkUpload": true,
+        "enableMultipartUpload": true,
+        "enableResumableUpload": true,
+        "enablePersistentUploadQueue": true,
+        "enableSignedDirectDownload": true,
+        "s3PublicTransferReady": true,
+        "enableDesktopParallelDownload": true,
+        "signedDownloadExpiresMinutes": 15,
+        "chunkSizeMb": 64,
+        "chunkSizeBytes": 67108864,
+        "multipartMinFileSizeMb": 100,
+        "multipartThresholdBytes": 104857600,
+        "multipartDefaultPartSizeMb": 64,
+        "multipartMinPartSizeMb": 16,
+        "multipartMaxPartSizeMb": 128,
+        "maxMultipartUploadMb": 20480,
+        "uploadQueueConcurrency": 3,
+        "uploadRetryLimit": 3,
+        "chunkUploadExpiresHours": 72,
+        "unauthenticatedHealth": {
+          "ok": true,
+          "service": "pl-chat-internal-workspace",
+          "generatedAt": "2026-06-29T01:38:18.710Z"
+        }
+      }
+    },
+    {
+      "name": "runtime origin benchmark target",
+      "pass": true,
+      "detail": {
+        "baseUrl": "https://chargers-secretariat-hurricane-presently.trycloudflare.com"
+      }
+    },
+    {
+      "name": "MinIO/S3 public transfer capability detected",
+      "pass": true,
+      "detail": {
+        "s3PublicTransferReady": true,
+        "enableMultipartUpload": true,
+        "enableSignedDirectDownload": true,
+        "maxMultipartUploadMb": 20480,
+        "multipartMinFileSizeMb": 100,
+        "bucketIsPrivateExpected": true
+      }
+    },
+    {
+      "name": "size 1024 MB selected strategy",
+      "pass": true,
+      "detail": {
+        "uploadPath": "multipart",
+        "canSendBytes": true
+      }
+    },
+    {
+      "name": "multipart upload concurrency selected",
+      "pass": true,
+      "detail": {
+        "concurrency": 3,
+        "serverRecommendedConcurrency": 3,
+        "serverFallbackConcurrency": [
+          2,
+          1
+        ],
+        "route": "quick_tunnel",
+        "reason": "quick_tunnel_minio_signed_multipart_benchmark",
+        "override": null
+      }
+    },
+    {
+      "name": "signed MinIO upload URL issued",
+      "pass": true,
+      "detail": {
+        "origin": "https://luggage-particle-unable-crystal.trycloudflare.com",
+        "expiresAt": "2026-06-29T02:08:23.829Z",
+        "urlRedacted": true
+      }
+    }
+  ],
+  "averages": {},
+  "measurements": [
+    {
+      "label": "health-check",
+      "route": "quick_tunnel",
+      "baseUrl": "https://chargers-secretariat-hurricane-presently.trycloudflare.com",
+      "strategy": "auto",
+      "bytes": 0,
+      "sizeMb": 0,
+      "elapsedMs": 2330.7,
+      "throughputMbPerSecond": 0,
+      "clientRssDeltaMb": 15.84,
+      "phase": "preflight"
+    }
+  ],
+  "cleanup": {
+    "uploadedBenchmarkFiles": 0,
+    "multipartSessionsCancelled": 1,
+    "localTemporaryFilesRemoved": true
+  },
+  "warning": "Transfers larger than 1024 MB are capability checks only unless PL_CHAT_BENCHMARK_REAL_LARGE=true.",
+  "error": "Signed MinIO part upload could not reach https://luggage-particle-unable-crystal.trycloudflare.com: write ECONNRESET"
+}

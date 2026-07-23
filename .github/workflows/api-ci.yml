@@ -1,0 +1,52 @@
+name: API CI
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/api-ci.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/api-ci.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: plchat
+          POSTGRES_USER: plchat
+          POSTGRES_PASSWORD: plchat
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U plchat -d plchat"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run prisma:generate
+        env:
+          DATABASE_URL: postgresql://plchat:plchat@localhost:5432/plchat?schema=public
+      - run: npm run typecheck
+        env:
+          DATABASE_URL: postgresql://plchat:plchat@localhost:5432/plchat?schema=public
+          REDIS_URL: redis://localhost:6379
+          JWT_ACCESS_SECRET: ci-access-secret-with-at-least-32-bytes
+          JWT_REFRESH_SECRET: ci-refresh-secret-with-at-least-32-bytes

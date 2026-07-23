@@ -1,0 +1,756 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum RoomType {
+  DIRECT
+  GROUP
+  CHANNEL
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  VOICE
+  VIDEO
+  SYSTEM
+}
+
+enum AttachmentStatus {
+  PENDING_SCAN
+  READY
+  BLOCKED
+  DELETED
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  REJECTED
+}
+
+enum ProfileVisibility {
+  PUBLIC
+  FOLLOWERS
+  FRIENDS
+  PRIVATE
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+}
+
+enum PresenceStatus {
+  ONLINE
+  OFFLINE
+  AWAY
+  BUSY
+}
+
+enum FileStorageDriver {
+  LOCAL
+  S3
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  users                  User[]
+  inviteTokens           InviteToken[]
+  sessions               Session[]
+  conversations          Conversation[]
+  conversationMembers    ConversationMember[]
+  files                  File[]
+  fileShareLinks         FileShareLink[]
+  messageAttachments     MessageAttachment[]
+  profilePosts           ProfilePost[]
+  profilePostComments    ProfilePostComment[]
+  profilePostReactions   ProfilePostReaction[]
+  notifications          Notification[]
+  activityLogs           ActivityLog[]
+
+  @@index([deletedAt])
+}
+
+model User {
+  id           String    @id @default(cuid())
+  organizationId String?
+  email        String    @unique
+  passwordHash String
+  role         UserRole  @default(USER)
+  emailVerifiedAt DateTime?
+  lastLoginAt  DateTime?
+  passwordChangedAt DateTime?
+  lockedAt     DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  profile      UserProfile?
+  sessions     Session[]
+  emailVerifications EmailVerification[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  inviteTokensSent InviteToken[] @relation("InviteSender")
+  emailLogs EmailLog[]
+  memberships  GroupMember[]
+  sentMessages Message[] @relation("SentMessages")
+  reactions    MessageReaction[]
+  readReceipts ReadReceipt[]
+  deletedMessages Message[] @relation("DeletedMessages")
+  messageEditHistory ChatMessageEditHistory[]
+  uploadedAttachments Attachment[]
+  devices      NotificationDevice[]
+  notifications Notification[]
+  reportsMade  Report[] @relation("Reporter")
+  reportsAbout Report[] @relation("ReportedUser")
+  blockedUsers BlockedUser[] @relation("Blocker")
+  blockedBy    BlockedUser[] @relation("Blocked")
+  following     Follow[] @relation("FollowSource")
+  followers     Follow[] @relation("FollowTarget")
+  friendshipRequestsSent Friendship[] @relation("FriendshipRequester")
+  friendshipRequestsReceived Friendship[] @relation("FriendshipAddressee")
+  adminActions AdminAuditLog[]
+  presence UserPresence?
+  activityLogs ActivityLog[]
+  ownedConversations Conversation[] @relation("ConversationOwner")
+  conversationMemberships ConversationMember[]
+  uploadedFiles File[] @relation("FileUploader")
+  deletedFiles File[] @relation("FileDeletedBy")
+  createdFileShareLinks FileShareLink[]
+  messageAttachments MessageAttachment[]
+  profilePosts ProfilePost[]
+  profilePostComments ProfilePostComment[]
+  profilePostReactions ProfilePostReaction[]
+
+  @@index([organizationId, createdAt])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model UserProfile {
+  userId      String   @id
+  displayName String
+  username    String   @unique
+  avatarUrl   String?
+  coverUrl     String?
+  bio         String?
+  publicLink  String?
+  statusText  String?
+  visibility  ProfileVisibility @default(PUBLIC)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailVerification {
+  id           String   @id @default(cuid())
+  userId       String
+  codeHash     String
+  purpose      String   @default("signup")
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  attempts     Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, consumedAt])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tokenHash])
+  @@index([userId, usedAt, expiresAt])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tokenHash])
+  @@index([userId, usedAt, expiresAt])
+  @@index([expiresAt])
+}
+
+model InviteToken {
+  id             String   @id @default(cuid())
+  organizationId String?
+  email          String
+  role           String   @default("member")
+  tokenHash      String
+  invitedById    String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  invitedBy User @relation("InviteSender", fields: [invitedById], references: [id], onDelete: Restrict)
+
+  @@unique([tokenHash])
+  @@index([email, acceptedAt])
+  @@index([invitedById, createdAt])
+  @@index([expiresAt])
+}
+
+model EmailLog {
+  id                String   @id @default(cuid())
+  organizationId    String?
+  userId            String?
+  to                String
+  subject           String
+  type              String
+  status            String
+  providerMessageId String?
+  error             String?
+  createdAt         DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([type, status, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("FollowSource", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("FollowTarget", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId, createdAt])
+}
+
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status, createdAt])
+  @@index([requesterId, status, createdAt])
+}
+
+model ChatRoom {
+  id          String    @id @default(cuid())
+  type        RoomType
+  title       String?
+  description String?
+  avatarUrl   String?
+  isLocked    Boolean   @default(false)
+  keyVersion  Int       @default(1)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members     GroupMember[]
+  messages    Message[]
+  reports     Report[]
+  notifications Notification[]
+
+  @@index([type, updatedAt])
+  @@index([deletedAt])
+}
+
+model Conversation {
+  id             String    @id @default(cuid())
+  organizationId String
+  type           RoomType
+  title          String?
+  description    String?
+  avatarFileId   String?
+  ownerId        String?
+  legacyRoomId   String?   @unique
+  archivedAt     DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        User?        @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  members      ConversationMember[]
+  files        File[]
+  notifications Notification[]
+
+  @@index([organizationId, type, updatedAt])
+  @@index([organizationId, archivedAt])
+  @@index([organizationId, deletedAt])
+}
+
+model ConversationMember {
+  id             String     @id @default(cuid())
+  organizationId String
+  conversationId String
+  userId         String
+  role           MemberRole @default(MEMBER)
+  mutedUntil     DateTime?
+  joinedAt       DateTime   @default(now())
+  leftAt         DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([organizationId, userId, leftAt])
+  @@index([conversationId, leftAt])
+}
+
+model GroupMember {
+  id        String     @id @default(cuid())
+  roomId    String
+  userId    String
+  role      MemberRole @default(MEMBER)
+  mutedUntil DateTime?
+  joinedAt  DateTime   @default(now())
+  leftAt    DateTime?
+
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([userId, leftAt])
+  @@index([roomId, leftAt])
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  roomId         String
+  senderId       String
+  type           MessageType @default(TEXT)
+  body           String?
+  encryptedBody  String?
+  clientNonce    String
+  senderKeyId    String?
+  keyVersion     Int?
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  deletedById     String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  room        ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Restrict)
+  deletedBy   User?    @relation("DeletedMessages", fields: [deletedById], references: [id], onDelete: SetNull)
+  editHistory ChatMessageEditHistory[]
+  attachments Attachment[]
+  productionAttachments MessageAttachment[]
+  reactions   MessageReaction[]
+  reads       ReadReceipt[]
+  reports     Report[]
+  notifications Notification[]
+
+  @@unique([senderId, clientNonce])
+  @@index([roomId, createdAt, id])
+  @@index([senderId, createdAt])
+  @@index([deletedAt])
+}
+
+model MessageAttachment {
+  id             String   @id @default(cuid())
+  organizationId String
+  messageId      String
+  fileId         String
+  uploaderId     String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  message      Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  file         File         @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  uploader     User         @relation(fields: [uploaderId], references: [id], onDelete: Restrict)
+
+  @@unique([messageId, fileId])
+  @@index([organizationId, createdAt])
+  @@index([fileId])
+}
+
+model ChatMessageEditHistory {
+  id          String   @id @default(cuid())
+  messageId   String
+  editedById  String
+  oldContent  String?
+  newContent  String?
+  createdAt   DateTime @default(now())
+
+  message  Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  editedBy User    @relation(fields: [editedById], references: [id], onDelete: Restrict)
+
+  @@index([messageId, createdAt])
+  @@index([editedById, createdAt])
+}
+
+model Attachment {
+  id          String           @id @default(cuid())
+  messageId   String
+  uploaderId  String
+  status      AttachmentStatus @default(PENDING_SCAN)
+  storageKey  String
+  cdnUrl      String?
+  mimeType    String
+  byteSize    BigInt
+  width       Int?
+  height      Int?
+  durationMs  Int?
+  checksumSha256 String?
+  createdAt   DateTime @default(now())
+
+  message  Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  uploader User    @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([status, createdAt])
+  @@index([uploaderId, createdAt])
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([userId, createdAt])
+}
+
+model ReadReceipt {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId, readAt])
+}
+
+model Session {
+  id               String    @id @default(cuid())
+  organizationId   String?
+  userId           String
+  refreshTokenHash String?
+  deviceName       String?
+  ipAddress        String?
+  userAgent        String?
+  lastSeenAt       DateTime  @default(now())
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, revokedAt])
+  @@index([userId, revokedAt])
+  @@index([lastSeenAt])
+}
+
+model UserPresence {
+  id              String         @id @default(cuid())
+  userId          String         @unique
+  status          PresenceStatus @default(OFFLINE)
+  lastSeenAt      DateTime?
+  lastHeartbeatAt DateTime?
+  updatedAt       DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, updatedAt])
+  @@index([lastHeartbeatAt])
+}
+
+model NotificationDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  platform    String
+  pushTokenHash String
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pushTokenHash])
+  @@index([userId, enabled])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  organizationId String?
+  userId    String
+  roomId    String?
+  messageId String?
+  conversationId String?
+  targetType String?
+  targetId   String?
+  targetUrl  String?
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room    ChatRoom? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  message Message?  @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([userId, readAt, createdAt])
+  @@index([roomId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model BlockedUser {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  reporterId     String
+  reportedUserId String?
+  roomId         String?
+  messageId      String?
+  reason         String
+  status         ReportStatus @default(OPEN)
+  moderatorNote  String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  reporter     User      @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser User?     @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  room         ChatRoom? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  message      Message?  @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([reportedUserId, createdAt])
+}
+
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  actorId     String
+  action      String
+  targetType  String
+  targetId    String
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  organizationId String?
+  actorId     String?
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+}
+
+model File {
+  id             String           @id @default(cuid())
+  organizationId String
+  uploaderId     String
+  conversationId String?
+  postId         String?
+  originalName   String
+  safeName       String
+  extension      String?
+  mimeType       String
+  byteSize       BigInt
+  storageDriver  FileStorageDriver @default(LOCAL)
+  storageKey     String
+  checksumSha256 String?
+  previewMode    String           @default("safe-only")
+  scanStatus     AttachmentStatus @default(PENDING_SCAN)
+  uploadedAt     DateTime         @default(now())
+  deletedAt      DateTime?
+  deletedById    String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  uploader     User         @relation("FileUploader", fields: [uploaderId], references: [id], onDelete: Restrict)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  deletedBy    User?        @relation("FileDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  messageAttachments MessageAttachment[]
+  shareLinks   FileShareLink[]
+  profilePosts ProfilePost[]
+
+  @@index([organizationId, uploadedAt])
+  @@index([organizationId, extension, uploadedAt])
+  @@index([organizationId, uploaderId, uploadedAt])
+  @@index([organizationId, conversationId, uploadedAt])
+  @@index([organizationId, deletedAt])
+}
+
+model FileShareLink {
+  id             String   @id @default(cuid())
+  organizationId String
+  fileId         String
+  tokenHash      String
+  createdById    String
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  openedCount    Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  file         File         @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([tokenHash])
+  @@index([organizationId, fileId, createdAt])
+  @@index([expiresAt, revokedAt])
+}
+
+model ProfilePost {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  text           String
+  attachmentFileId String?
+  pinnedAt       DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachmentFile File?      @relation(fields: [attachmentFileId], references: [id], onDelete: SetNull)
+  comments     ProfilePostComment[]
+  reactions    ProfilePostReaction[]
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, userId, createdAt])
+  @@index([organizationId, pinnedAt])
+  @@index([organizationId, deletedAt])
+}
+
+model ProfilePostComment {
+  id             String    @id @default(cuid())
+  organizationId String
+  postId         String
+  userId         String
+  text           String
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  post         ProfilePost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, postId, createdAt])
+  @@index([organizationId, userId, createdAt])
+  @@index([organizationId, deletedAt])
+}
+
+model ProfilePostReaction {
+  id             String   @id @default(cuid())
+  organizationId String
+  postId         String
+  userId         String
+  emoji          String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  post         ProfilePost  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId, emoji])
+  @@index([organizationId, userId, createdAt])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  sessionId String?
+  name      String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+  @@index([userId, createdAt])
+}

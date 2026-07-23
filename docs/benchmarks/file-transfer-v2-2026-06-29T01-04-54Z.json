@@ -1,0 +1,31 @@
+{
+  "title": "PL CHAT File Transfer Benchmark V2",
+  "status": "failed",
+  "startedAt": "2026-06-29T01:04:54.472Z",
+  "finishedAt": "2026-06-29T01:04:54.527Z",
+  "route": "quick_tunnel",
+  "baseUrl": "https://casio-routers-pig-beads.trycloudflare.com",
+  "user": null,
+  "roomId": "",
+  "configuration": {
+    "sizesMb": [
+      1024
+    ],
+    "runs": 1,
+    "strategy": "auto",
+    "downloadMode": "server",
+    "realLargeTransfer": false,
+    "maxDefaultRealTransferMb": 1024,
+    "server": null
+  },
+  "capabilityChecks": [],
+  "averages": {},
+  "measurements": [],
+  "cleanup": {
+    "uploadedBenchmarkFiles": 0,
+    "multipartSessionsCancelled": 0,
+    "localTemporaryFilesRemoved": true
+  },
+  "warning": "Transfers larger than 1024 MB are capability checks only unless PL_CHAT_BENCHMARK_REAL_LARGE=true.",
+  "error": "fetch failed"
+}

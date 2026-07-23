@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+  <title>PL CHAT</title>
+  <style>
+    :root {
+      --bg: #f7fbfc;
+      --panel: #ffffff;
+      --text: #18323a;
+      --muted: #6d858d;
+      --line: #d8edf2;
+      --brand: #9bdff0;
+      --brand-dark: #2f7585;
+      --brand-soft: #eaf9fd;
+      --danger-soft: #ffeded;
+      --danger: #b42318;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: radial-gradient(circle at 20% 10%, rgba(155, 223, 240, .22), transparent 30%), var(--bg);
+      color: var(--text);
+      font-family: Arial, "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
+    }
+    main {
+      width: min(760px, 100%);
+      display: grid;
+      gap: 16px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 16px 42px rgba(42, 95, 108, .10);
+    }
+    .top { display: flex; gap: 14px; align-items: center; }
+    img { width: 54px; height: 54px; border-radius: 8px; }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    p { margin: 6px 0; line-height: 1.55; color: var(--muted); }
+    label { display: grid; gap: 6px; font-weight: 800; }
+    input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: #fbfeff;
+      color: var(--text);
+      font: inherit;
+      outline: none;
+    }
+    input:focus { border-color: #8fd8ea; box-shadow: 0 0 0 3px rgba(155, 223, 240, .28); }
+    code { overflow-wrap: anywhere; color: var(--brand-dark); font-weight: 800; }
+    .panel { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fbfeff; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 14px;
+      background: var(--brand);
+      color: #174f5c;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    button.secondary { background: #eef6f8; color: #344f58; }
+    button.danger { background: var(--danger-soft); color: var(--danger); }
+    .hint { font-size: 13px; color: var(--muted); }
+    .status { min-height: 22px; color: var(--brand-dark); font-weight: 800; }
+    .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+    .check { padding: 10px; border-radius: 8px; background: var(--brand-soft); color: var(--brand-dark); font-size: 13px; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="top">
+      <img src="../assets/icon.png" alt="PL CHAT">
+      <div>
+        <h1>ยังเชื่อมต่อ PL CHAT ไม่ได้</h1>
+        <p>แอพยังเปิดได้ปกติ แต่ตอนนี้ติดต่อเครื่องโฮสต์ไม่ได้ จึงไม่ปล่อยให้เป็นหน้าขาวหรือดับเอง</p>
+      </div>
+    </div>
+    <div class="checks">
+      <div class="check">อยู่ Wi-Fi เดียวกับเครื่องโฮสต์</div>
+      <div class="check">เปิด PL CHAT Network Autostart แล้ว</div>
+      <div class="check">Server URL ต้องเป็น IP เครื่องโฮสต์</div>
+    </div>
+    <section class="panel">
+      <p>Current server: <code id="target">checking...</code></p>
+      <label>
+        Server URL
+        <input id="serverUrl" type="url" placeholder="http://192.168.1.117:8788" autocomplete="off">
+      </label>
+      <p class="hint">เครื่องลูกไม่ควรใช้ localhost ให้ใช้ IP เครื่องโฮสต์ เช่น http://192.168.1.117:8788</p>
+      <div class="actions">
+        <button id="test" type="button">ทดสอบการเชื่อมต่อ</button>
+        <button id="save" type="button">บันทึก URL แล้วลองใหม่</button>
+        <button id="retry" class="secondary" type="button">ลองใหม่</button>
+        <button id="clearCache" class="secondary" type="button">ล้าง Cache</button>
+        <button id="logs" class="secondary" type="button">เปิด Log</button>
+      </div>
+      <p id="status" class="status"></p>
+    </section>
+    <p class="hint">Config file: <code id="configPath">checking...</code></p>
+  </main>
+  <script>
+    const target = document.getElementById('target');
+    const serverUrl = document.getElementById('serverUrl');
+    const configPath = document.getElementById('configPath');
+    const status = document.getElementById('status');
+
+    function setStatus(message) {
+      status.textContent = message || '';
+    }
+
+    window.plChatDesktop.getInfo().then((info) => {
+      target.textContent = info.appUrl;
+      serverUrl.value = info.appUrl;
+      configPath.textContent = info.configPath || '-';
+    });
+
+    document.getElementById('retry').onclick = () => window.plChatDesktop.retryLoad();
+    document.getElementById('test').onclick = async () => {
+      setStatus('Testing connection...');
+      const result = await window.plChatDesktop.testServer(serverUrl.value);
+      setStatus(result.ok ? `Connected in ${result.elapsedMs} ms` : `Still offline: ${result.message}`);
+    };
+    document.getElementById('clearCache').onclick = async () => {
+      setStatus('Clearing cache...');
+      await window.plChatDesktop.clearCache();
+      setStatus('Cache cleared. Trying again...');
+      window.plChatDesktop.retryLoad();
+    };
+    document.getElementById('logs').onclick = () => window.plChatDesktop.openLogs();
+    document.getElementById('save').onclick = async () => {
+      setStatus('Saving...');
+      const result = await window.plChatDesktop.setServerUrl(serverUrl.value);
+      if (!result.ok) {
+        setStatus('Invalid URL. Use a full URL like http://192.168.1.50:8788');
+        return;
+      }
+      target.textContent = result.appUrl;
+      setStatus('Saved. Trying to connect...');
+      window.plChatDesktop.retryLoad();
+    };
+  </script>
+</body>
+</html>

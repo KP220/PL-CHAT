@@ -1,0 +1,2240 @@
+﻿<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f8790">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PL CHAT">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="logo.png">
+  <title>PL CHAT</title>
+  <style>
+    :root {
+      --ink: #172121;
+      --muted: #667085;
+      --soft: #8a94a6;
+      --canvas: #f6f7f4;
+      --surface: #ffffff;
+      --line: #dce2dc;
+      --primary: #0f8790;
+      --primary-dark: #0a6670;
+      --primary-soft: #d9f3ee;
+      --accent: #f59e0b;
+      --blue: #2f6bff;
+      --rose: #e11d48;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: Tahoma, Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .language-bar {
+      position: fixed;
+      top: 12px;
+      right: 14px;
+      z-index: 10;
+    }
+
+    .language-select {
+      min-width: 162px;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: #fff;
+      padding: 0 10px;
+      outline: 0;
+    }
+
+    .auth-page {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .auth-wrap {
+      width: min(530px, 100%);
+    }
+
+    .auth-logo {
+      width: 138px;
+      height: 138px;
+      display: block;
+      object-fit: contain;
+      margin: 0 auto 18px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .auth-card {
+      padding: 22px;
+    }
+
+    .auth-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .shield {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      color: #fff;
+      background: var(--primary);
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    .auth-title {
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 3px;
+    }
+
+    .notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+      border-radius: 8px;
+      padding: 11px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+      margin: 16px 0 14px;
+    }
+
+    .field,
+    .input {
+      width: 100%;
+      min-height: 48px;
+      border: 0;
+      outline: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 13px;
+    }
+
+    .field input,
+    .input {
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      flex: 1;
+      min-height: 48px;
+      width: 100%;
+      padding: 0;
+    }
+
+    .input {
+      background: var(--canvas);
+      padding: 0 13px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin: 0 0 12px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      min-height: 48px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--primary);
+      font-weight: 800;
+    }
+
+    .link-btn {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      background: transparent;
+      color: var(--primary-dark);
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    .verify-email {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .dev-code-box {
+      border: 1px dashed var(--primary);
+      border-radius: 8px;
+      background: #f9fffd;
+      color: var(--primary-dark);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .dev-code {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .verify-input {
+      min-height: 54px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .security-list {
+      border-top: 1px solid var(--line);
+      margin-top: 16px;
+      padding-top: 13px;
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      flex: 0 0 auto;
+    }
+
+    .brand-mark img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .brand-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .brand-copy span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--canvas);
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-size: 18px;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--rose);
+      top: 9px;
+      right: 10px;
+    }
+
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 260px 300px minmax(0, 1fr) 330px;
+      gap: 14px;
+      padding: 14px;
+      min-height: 0;
+    }
+
+    .dashboard,
+    .sidebar,
+    .thread,
+    .feed {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .dashboard,
+    .sidebar,
+    .feed {
+      padding: 12px;
+    }
+
+    .dashboard {
+      overflow-y: auto;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .room {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .room.private-room {
+      background: #fbfffd;
+    }
+
+    .dashboard-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      border-radius: 8px;
+      background: var(--canvas);
+      padding: 12px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .quick-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .quick-actions button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tool-tile {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 11px;
+      min-height: 78px;
+    }
+
+    .tool-tile strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .tool-tile span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      margin-top: 4px;
+    }
+
+    .file-uploader {
+      border: 1px dashed var(--primary);
+      border-radius: 8px;
+      background: #f9fffd;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .file-uploader label {
+      display: grid;
+      place-items: center;
+      min-height: 88px;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--primary-dark);
+      font-weight: 800;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .file-uploader input {
+      display: none;
+    }
+
+    .file-status {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--line);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: var(--primary);
+      transition: width 0.25s ease;
+    }
+
+    .assistant-card {
+      border-color: #bfe6e2;
+      background: linear-gradient(180deg, #ffffff 0%, #f7fffd 100%);
+    }
+
+    .assistant-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .assistant-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--primary);
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    .assistant-status {
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .assistant-log {
+      display: grid;
+      gap: 8px;
+      max-height: 230px;
+      overflow-y: auto;
+      margin: 12px 0;
+      padding-right: 2px;
+    }
+
+    .assistant-msg {
+      border-radius: 8px;
+      padding: 10px 11px;
+      font-size: 13px;
+      line-height: 1.45;
+      background: var(--canvas);
+    }
+
+    .assistant-msg.user {
+      color: #fff;
+      background: var(--primary);
+      justify-self: end;
+      max-width: 88%;
+    }
+
+    .assistant-msg.ai {
+      color: var(--ink);
+      background: #edf9f6;
+      justify-self: start;
+      max-width: 92%;
+    }
+
+    .assistant-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .assistant-form input {
+      min-height: 42px;
+      border: 0;
+      outline: 0;
+      border-radius: 8px;
+      background: var(--canvas);
+      color: var(--ink);
+      padding: 0 12px;
+    }
+
+    .assistant-form button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 0 14px;
+    }
+
+    .profile-card {
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .profile-cover {
+      min-height: 72px;
+      background: linear-gradient(135deg, var(--primary), #41c7cf);
+    }
+
+    .profile-body {
+      padding: 14px;
+    }
+
+    .profile-top {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin-top: -38px;
+      margin-bottom: 12px;
+    }
+
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border: 4px solid #fff;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--primary-dark);
+      font-size: 28px;
+      font-weight: 800;
+      flex: 0 0 auto;
+      overflow: hidden;
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-name {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .profile-name strong,
+    .public-profile strong {
+      display: block;
+      font-size: 18px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .profile-form {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .profile-form input,
+    .profile-form textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      outline: 0;
+      border-radius: 8px;
+      background: var(--canvas);
+      color: var(--ink);
+      padding: 0 12px;
+      margin: 0;
+    }
+
+    .profile-form textarea {
+      min-height: 76px;
+      padding: 10px 12px;
+    }
+
+    .profile-form button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--primary);
+      font-weight: 800;
+    }
+
+    .profile-photo-button {
+      min-height: 42px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .profile-photo-button input {
+      display: none;
+    }
+
+    .public-profile {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .public-profile-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+    }
+
+    .public-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--primary);
+      font-weight: 800;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .public-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    .profile-link {
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+      margin-top: 8px;
+    }
+
+    .room-settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      padding: 0 16px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .room-settings input {
+      min-height: 38px;
+      border: 0;
+      outline: 0;
+      border-radius: 8px;
+      background: var(--canvas);
+      color: var(--ink);
+      padding: 0 11px;
+      min-width: 0;
+    }
+
+    .room-settings button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 0 12px;
+    }
+
+    .room.active {
+      border-color: var(--primary);
+      background: #f9fffd;
+    }
+
+    .room-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--primary);
+      flex: 0 0 auto;
+    }
+
+    .room[data-room="product"] .room-icon {
+      background: var(--accent);
+    }
+
+    .room[data-room="ops"] .room-icon {
+      background: var(--blue);
+    }
+
+    .room-copy {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .room-name {
+      display: block;
+      font-weight: 800;
+      font-size: 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .room-last {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      min-width: 24px;
+      height: 24px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      padding: 0 7px;
+      color: #fff;
+      background: var(--rose);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .thread {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .thread-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .thread-head h2 {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .pill {
+      border-radius: 999px;
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+      padding: 7px 10px;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .thread-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .translate-toggle {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--primary-dark);
+      background: #fff;
+      padding: 0 10px;
+      font-weight: 800;
+    }
+
+    .translate-toggle.active {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .messages {
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .msg-row.mine {
+      justify-content: flex-end;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: var(--primary-dark);
+      background: var(--primary-soft);
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    .bubble {
+      max-width: 78%;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: var(--canvas);
+      line-height: 1.45;
+    }
+
+    .bubble.mine {
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .sender {
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .meta {
+      color: var(--soft);
+      font-size: 11px;
+      text-align: right;
+      margin-top: 6px;
+    }
+
+    .bubble.mine .meta {
+      color: #dff8f2;
+    }
+
+    .translated-note {
+      color: var(--soft);
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    .composer {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .composer input {
+      flex: 1;
+      min-height: 42px;
+      border: 0;
+      outline: 0;
+      border-radius: 8px;
+      background: var(--canvas);
+      color: var(--ink);
+      padding: 0 13px;
+    }
+
+    .send {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .feed {
+      overflow-y: auto;
+    }
+
+    .mood-card,
+    .post-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .post-card.video-post {
+      border-color: #b7e9e5;
+      background: #f9fffd;
+    }
+
+    .post-media {
+      margin-top: 12px;
+      border-radius: 8px;
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), #18a7b4);
+      font-size: 34px;
+      font-weight: 800;
+    }
+
+    .social-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .social-actions button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .social-actions button.active {
+      color: var(--rose);
+      border-color: #f5c2cc;
+      background: #fff5f7;
+    }
+
+    .mood-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .mood-chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--canvas);
+      color: var(--muted);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mood-chip.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 82px;
+      resize: vertical;
+      border: 0;
+      outline: 0;
+      border-radius: 8px;
+      background: var(--canvas);
+      color: var(--ink);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .post-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .post-copy {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .post-copy strong {
+      display: block;
+    }
+
+    .mood-label {
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .reaction {
+      display: flex;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    .bottom-tabs {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .workspace {
+        grid-template-columns: 1fr;
+        padding-bottom: 80px;
+      }
+
+      .sidebar,
+      .dashboard,
+      .feed-side {
+        display: none;
+      }
+
+      .dashboard.mobile-show,
+      .sidebar.mobile-show,
+      .feed-side.mobile-show {
+        display: block;
+      }
+
+      .thread.mobile-hide {
+        display: none;
+      }
+
+      .bottom-tabs {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        background: #fff;
+        border-top: 1px solid var(--line);
+        padding: 8px;
+      }
+
+      .bottom-tabs button {
+        min-height: 48px;
+        border: 0;
+        color: var(--soft);
+        background: transparent;
+        font-weight: 800;
+      }
+
+      .bottom-tabs button.active {
+        color: var(--primary);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="language-bar">
+    <select id="languageSelect" class="language-select" aria-label="Language">
+      <option value="auto">Auto / ภาษาของเครื่อง</option>
+      <option value="th">ไทย</option>
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+      <option value="ja">日本語</option>
+      <option value="ko">한국어</option>
+      <option value="ar">العربية</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+      <option value="hi">हिन्दी</option>
+      <option value="vi">Tiếng Việt</option>
+      <option value="id">Bahasa Indonesia</option>
+      <option value="lo">ລາວ</option>
+      <option value="km">ខ្មែរ</option>
+    </select>
+  </div>
+  <main id="authPage" class="auth-page">
+    <div class="auth-wrap">
+      <img src="logo.png" class="auth-logo" alt="PL CHAT logo">
+      <section class="auth-card panel">
+        <div class="auth-heading">
+          <div class="shield">✓</div>
+          <div>
+            <h1 id="authTitle" class="auth-title" data-i18n="registerTitle">สมัครสมาชิก</h1>
+            <p class="subtle" data-i18n="authSubtitle">สมัครด้วยอีเมลส่วนตัวแบบโซเชียลทั่วไป และยืนยันตัวตนก่อนเข้าใช้งาน</p>
+          </div>
+        </div>
+        <div class="notice"><span>✓</span><span id="noticeText" data-i18n="registerNotice">สมัครสมาชิกด้วยอีเมลส่วนตัวเพื่อรับรหัสยืนยัน</span></div>
+
+        <form id="registerForm">
+          <input id="fullNameInput" class="input" placeholder="ชื่อ-นามสกุล" autocomplete="name">
+          <label class="field"><span>✉</span><input id="registerEmailInput" type="email" placeholder="อีเมลส่วนตัว" autocomplete="email"></label>
+          <label class="field"><span>🔒</span><input id="registerPasswordInput" type="password" placeholder="รหัสผ่านที่ปลอดภัย" autocomplete="new-password"></label>
+          <p class="hint" data-i18n="passwordHint">อย่างน้อย 10 ตัวอักษร มีตัวพิมพ์ใหญ่ และตัวเลข</p>
+          <button class="primary-btn" type="submit" data-i18n="registerButton">สมัครและส่งรหัสยืนยัน</button>
+          <button class="link-btn" type="button" data-mode="login" data-i18n="goLogin">มีบัญชีแล้ว เข้าสู่ระบบ</button>
+        </form>
+
+        <form id="verifyForm" class="hidden">
+          <p id="pendingEmailText" class="verify-email"></p>
+          <div class="dev-code-box">
+            <span data-i18n="emailCodeHelp">กรุณาตรวจ inbox และกรอกรหัสยืนยันจากอีเมลของคุณ</span>
+          </div>
+          <input id="verificationInput" class="input verify-input" placeholder="รหัสยืนยัน 6 หลัก" maxlength="6" inputmode="numeric">
+          <button class="primary-btn" type="submit" data-i18n="verifyButton">ยืนยันอีเมล</button>
+          <button class="link-btn" type="button" data-mode="register" data-i18n="editRegister">แก้ไขข้อมูลสมัครสมาชิก</button>
+        </form>
+
+        <form id="loginForm" class="hidden">
+          <label class="field"><span>✉</span><input id="loginEmailInput" type="email" placeholder="อีเมลที่ยืนยันแล้ว" autocomplete="email"></label>
+          <label class="field"><span>🔒</span><input id="loginPasswordInput" type="password" placeholder="รหัสผ่าน" autocomplete="current-password"></label>
+          <button class="primary-btn" type="submit" data-i18n="loginButton">เข้าสู่ระบบ</button>
+          <button class="link-btn" type="button" data-mode="register" data-i18n="goRegister">ยังไม่มีบัญชี สมัครสมาชิก</button>
+        </form>
+
+        <div class="security-list">
+          <div data-i18n="securityOne">ยืนยันอีเมลทุกครั้งที่สมัครสมาชิก</div>
+          <div data-i18n="securityTwo">ล็อกอินได้เฉพาะบัญชีที่ผ่านการยืนยันแล้ว</div>
+          <div data-i18n="securityThree">รองรับ MFA, audit log และการป้องกันบัญชีปลอมในระบบจริง</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <main id="appPage" class="app hidden">
+    <header class="topbar">
+      <div class="brand-mark"><img src="logo.png" alt=""></div>
+      <div class="brand-copy">
+        <strong>PL CHAT</strong>
+        <span id="currentEmail" data-i18n="tagline">โซเชียลแชทสาธารณะสำหรับทุกคนทั่วโลก</span>
+      </div>
+      <button class="icon-btn" title="ค้นหา">⌕</button>
+      <button class="icon-btn" title="แจ้งเตือน">🔔<span class="dot"></span></button>
+      <button id="logoutBtn" class="icon-btn" title="ออกจากระบบ">↪</button>
+    </header>
+
+    <section class="workspace">
+      <aside id="dashboardPane" class="dashboard panel mobile-show">
+        <h2 class="section-title" data-i18n="dashboard">แดชบอร์ด</h2>
+        <div class="dashboard-card">
+          <p class="subtle">PL CHAT เปิดใช้สำหรับผู้ใช้ทั่วโลก</p>
+          <div class="metric-grid">
+            <div class="metric"><strong id="engagementCount">86</strong><span data-i18n="engagement">การมีส่วนร่วม</span></div>
+            <div class="metric"><strong>24</strong><span data-i18n="newPosts">โพสต์ใหม่</span></div>
+            <div class="metric"><strong>9</strong><span data-i18n="privateChats">แชทส่วนตัว</span></div>
+            <div class="metric"><strong>8</strong><span data-i18n="shortVideos">คลิปสั้น</span></div>
+          </div>
+        </div>
+        <div class="dashboard-card profile-card">
+          <div class="profile-cover"></div>
+          <div class="profile-body">
+            <div class="profile-top">
+              <div id="profileAvatar" class="profile-avatar">P</div>
+              <div class="profile-name">
+                <strong id="profileDisplayName">PL CHAT User</strong>
+                <p id="profileUsername" class="subtle">@plchat</p>
+              </div>
+            </div>
+            <p class="subtle">ตกแต่งโปรไฟล์สาธารณะของคุณ เพื่อนและผู้ติดตามจะเห็นข้อมูลนี้</p>
+            <form id="profileForm" class="profile-form">
+              <input id="profileNameInput" maxlength="40" placeholder="ชื่อที่แสดงบนโปรไฟล์">
+              <input id="profileUsernameInput" maxlength="24" placeholder="username เช่น plchat_creator">
+              <textarea id="profileBioInput" maxlength="160" placeholder="แนะนำตัวสั้น ๆ"></textarea>
+              <input id="profileLinkInput" maxlength="80" placeholder="ลิงก์หรือช่องทางของคุณ">
+              <input id="profileStatusInput" maxlength="60" placeholder="สถานะ เช่น พร้อมคุย พร้อมแชร์งาน">
+              <label class="profile-photo-button">เปลี่ยนรูปโปรไฟล์
+                <input id="profilePhotoInput" type="file" accept="image/*">
+              </label>
+              <button type="submit">บันทึกโปรไฟล์</button>
+            </form>
+            <div class="public-profile">
+              <p class="subtle">ตัวอย่างที่เพื่อนและผู้ติดตามเห็น</p>
+              <div class="public-profile-top">
+                <div id="publicProfileAvatar" class="public-avatar">P</div>
+                <div>
+                  <strong id="publicProfileName">PL CHAT User</strong>
+                  <p id="publicProfileUsername" class="subtle">@plchat</p>
+                </div>
+              </div>
+              <p id="publicProfileBio" class="subtle">ยินดีที่ได้รู้จักบน PL CHAT</p>
+              <p id="publicProfileLink" class="profile-link">plchat.app/profile</p>
+              <div class="profile-stats">
+                <span>เพื่อน 128</span>
+                <span>ผู้ติดตาม 2.4K</span>
+                <span id="publicProfileStatus">พร้อมคุย</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-card">
+          <h2 class="section-title">ศูนย์เครื่องมือ</h2>
+          <div class="tool-grid">
+            <div class="tool-tile"><strong>💬 Chat</strong><span>แชทเดี่ยว กลุ่ม และชุมชน</span></div>
+            <div class="tool-tile"><strong>🌍 Feed</strong><span>โพสต์ คลิปสั้น ไลฟ์ และแชร์</span></div>
+            <div class="tool-tile"><strong>📁 Cloud File</strong><span>ส่งไฟล์ใหญ่และเก็บบนคลาวด์</span></div>
+            <div class="tool-tile"><strong>▣ QR</strong><span>เพิ่มเพื่อน กลุ่ม และชำระเงินในอนาคต</span></div>
+            <div class="tool-tile"><strong>🧩 Mini Tools</strong><span>เครื่องมือย่อยแบบ WeChat</span></div>
+            <div class="tool-tile"><strong>🌐 Translate</strong><span>แปลแชทและโพสต์อัตโนมัติ</span></div>
+            <div class="tool-tile"><strong>AI Assistant</strong><span>ChatGPT ผู้ช่วยส่วนตัวของผู้ใช้ทุกคน</span></div>
+          </div>
+        </div>
+        <div class="dashboard-card">
+          <h2 class="section-title">ส่งไฟล์ขนาดใหญ่</h2>
+          <p class="subtle">ตัวอย่าง flow สำหรับไฟล์ใหญ่ สูงสุดระดับ 20GB ต่อไฟล์เมื่อเชื่อม cloud storage จริง</p>
+          <div class="file-uploader">
+            <label for="largeFileInput">＋ เลือกไฟล์ใหญ่เพื่อส่งในแชทหรือโพสต์</label>
+            <input id="largeFileInput" type="file">
+            <div id="fileStatus" class="file-status">ยังไม่ได้เลือกไฟล์</div>
+            <div class="progress-track"><div id="uploadProgress" class="progress-bar"></div></div>
+          </div>
+        </div>
+        <div class="dashboard-card assistant-card">
+          <div class="assistant-head">
+            <div class="assistant-mark">AI</div>
+            <div>
+              <h2 class="section-title" style="margin-bottom: 2px;">ChatGPT Assistant</h2>
+              <p class="subtle">ผู้ช่วยส่วนตัวสำหรับสรุปแชท แปลภาษา เขียนโพสต์ และช่วยค้นไอเดีย</p>
+            </div>
+            <span id="assistantStatus" class="assistant-status">พร้อมใช้</span>
+          </div>
+          <div id="assistantLog" class="assistant-log" aria-live="polite"></div>
+          <form id="assistantForm" class="assistant-form">
+            <input id="assistantInput" placeholder="ถาม ChatGPT ใน PL CHAT">
+            <button type="submit">ส่ง</button>
+          </form>
+          <p class="hint" style="margin-top: 10px;">ตัวพรีวิวจะใช้คำตอบตัวอย่าง ถ้าเปิดเซิร์ฟเวอร์ OpenAI ที่ localhost:8787 จะเรียก API จริงให้อัตโนมัติ</p>
+        </div>
+        <div class="dashboard-card">
+          <h2 class="section-title">ทางลัด</h2>
+          <div class="quick-actions">
+            <button type="button" data-tab-jump="feed">เปิดฟีดรวม</button>
+            <button type="button" data-tab-jump="chat">เปิดห้องแชท</button>
+            <button type="button" data-tab-jump="rooms">เปิดแชทส่วนตัว</button>
+          </div>
+        </div>
+      </aside>
+
+      <aside id="roomsPane" class="sidebar panel">
+        <h2 class="section-title">แชทและชุมชน</h2>
+        <button class="room active" data-room="global">
+          <span class="room-icon">💬</span>
+          <span class="room-copy"><span class="room-name">Global Square</span><span class="room-last">ยินดีต้อนรับผู้ใช้จากทุกประเทศ</span></span>
+          <span class="badge">4</span>
+        </button>
+        <button class="room" data-room="creator">
+          <span class="room-icon">💬</span>
+          <span class="room-copy"><span class="room-name">Creator Hub</span><span class="room-last">แชร์คลิปสั้นและไอเดียใหม่</span></span>
+          <span class="badge">2</span>
+        </button>
+        <button class="room" data-room="filedrop">
+          <span class="room-icon">💬</span>
+          <span class="room-copy"><span class="room-name">Large File Drop</span><span class="room-last">ส่งไฟล์วิดีโอ โปรเจกต์ และเอกสารใหญ่</span></span>
+        </button>
+        <button class="room private-room" data-room="private-nam">
+          <span class="room-icon">🔒</span>
+          <span class="room-copy"><span class="room-name">Nam · แชทส่วนตัว</span><span class="room-last">ส่งไฟล์สรุปให้แล้วนะ</span></span>
+          <span class="badge">1</span>
+        </button>
+        <button class="room private-room" data-room="private-korn">
+          <span class="room-icon">🔒</span>
+          <span class="room-copy"><span class="room-name">Korn · แชทส่วนตัว</span><span class="room-last">คุยต่อหลังประชุมได้เลย</span></span>
+        </button>
+      </aside>
+
+      <section id="chatPane" class="thread panel">
+        <div class="thread-head">
+          <div>
+            <h2 id="roomTitle">Global Square</h2>
+            <p id="roomScope" class="subtle">ชุมชนสาธารณะทั่วโลก</p>
+          </div>
+          <div class="thread-actions">
+            <button id="editRoomBtn" class="translate-toggle" type="button">แก้ชื่อห้อง</button>
+            <button id="translateThreadBtn" class="translate-toggle" type="button">🌐 แปล</button>
+            <span class="pill">👥 128</span>
+          </div>
+        </div>
+        <form id="roomSettingsForm" class="room-settings hidden">
+          <input id="roomNameInput" maxlength="40" placeholder="ชื่อกลุ่มหรือชื่อห้องแชท">
+          <input id="roomScopeInput" maxlength="70" placeholder="คำอธิบายห้อง">
+          <button type="submit">บันทึก</button>
+        </form>
+        <div id="messages" class="messages"></div>
+        <form id="messageForm" class="composer">
+          <button class="icon-btn" type="button">＋</button>
+          <input id="messageInput" placeholder="พิมพ์ข้อความ แปลภาษา หรือแนบไฟล์ใหญ่">
+          <button class="send" type="submit">ส่ง</button>
+        </form>
+      </section>
+
+      <aside id="feedPane" class="feed feed-side panel">
+        <section class="mood-card">
+          <h2 class="section-title" data-i18n="feed">ฟีดรวม</h2>
+          <p class="subtle" data-i18n="feedSubtitle">โพสต์สั้น คลิปสั้น และบทสนทนาที่ทุกคนมีส่วนร่วมได้</p>
+          <div id="moodChoices" class="mood-row"></div>
+          <textarea id="moodInput" placeholder="เล่าให้เพื่อนและผู้ติดตามฟังแบบสั้น ๆ"></textarea>
+          <button id="publishMoodBtn" class="primary-btn" type="button">โพสต์ความรู้สึก</button>
+        </section>
+        <div id="posts"></div>
+      </aside>
+    </section>
+
+    <nav class="bottom-tabs">
+      <button class="active" data-tab="dashboard">แดชบอร์ด</button>
+      <button data-tab="rooms">แชท</button>
+      <button data-tab="chat">ห้องปัจจุบัน</button>
+      <button data-tab="feed">ฟีด</button>
+    </nav>
+  </main>
+
+  <script>
+    const translations = {
+      th: {
+        registerTitle: 'สมัครสมาชิก',
+        loginTitle: 'เข้าสู่ระบบ PL CHAT',
+        verifyTitle: 'ยืนยันอีเมล',
+        authSubtitle: 'สมัครด้วยอีเมลส่วนตัวแบบโซเชียลทั่วไป และยืนยันตัวตนก่อนเข้าใช้งาน',
+        registerNotice: 'สมัครสมาชิกด้วยอีเมลส่วนตัวเพื่อรับรหัสยืนยัน',
+        loginNotice: 'ล็อกอินได้เฉพาะบัญชีที่สมัครและยืนยันอีเมลแล้ว',
+        fullName: 'ชื่อ-นามสกุล',
+        personalEmail: 'อีเมลส่วนตัว',
+        securePassword: 'รหัสผ่านที่ปลอดภัย',
+        verifiedEmail: 'อีเมลที่ยืนยันแล้ว',
+        password: 'รหัสผ่าน',
+        code: 'รหัสยืนยัน 6 หลัก',
+        passwordHint: 'อย่างน้อย 10 ตัวอักษร มีตัวพิมพ์ใหญ่ และตัวเลข',
+        registerButton: 'สมัครและส่งรหัสยืนยัน',
+        goLogin: 'มีบัญชีแล้ว เข้าสู่ระบบ',
+        verifyButton: 'ยืนยันอีเมล',
+        editRegister: 'แก้ไขข้อมูลสมัครสมาชิก',
+        loginButton: 'เข้าสู่ระบบ',
+        goRegister: 'ยังไม่มีบัญชี สมัครสมาชิก',
+        securityOne: 'ยืนยันอีเมลทุกครั้งที่สมัครสมาชิก',
+        securityTwo: 'ล็อกอินได้เฉพาะบัญชีที่ผ่านการยืนยันแล้ว',
+        securityThree: 'รองรับ MFA, audit log และการป้องกันบัญชีปลอมในระบบจริง',
+        tagline: 'โซเชียลแชทสาธารณะสำหรับทุกคนทั่วโลก',
+        dashboard: 'แดชบอร์ด',
+        engagement: 'การมีส่วนร่วม',
+        newPosts: 'โพสต์ใหม่',
+        privateChats: 'แชทส่วนตัว',
+        shortVideos: 'คลิปสั้น',
+        feed: 'ฟีดรวม',
+        feedSubtitle: 'โพสต์สั้น คลิปสั้น และบทสนทนาที่ทุกคนมีส่วนร่วมได้',
+        translate: 'แปล',
+        translatedTo: 'แปลเป็น',
+        nameRequired: 'กรุณากรอกชื่อผู้ใช้',
+        emailInvalid: 'กรุณากรอกอีเมลให้ถูกต้อง',
+        passwordInvalid: 'รหัสผ่านต้องมีอย่างน้อย 10 ตัวอักษร มีตัวพิมพ์ใหญ่ และมีตัวเลข',
+        codeInvalid: 'กรุณากรอกรหัสยืนยัน 6 หลักจากอีเมล',
+        codeSent: 'ส่งรหัสยืนยัน 6 หลักไปที่',
+        emailCodeHelp: 'กรุณาตรวจ inbox และกรอกรหัสยืนยันจากอีเมลของคุณ',
+        emailCodeSent: 'ส่งขั้นตอนยืนยันอีเมลไปที่',
+        verifySuccess: 'ยืนยันอีเมลสำเร็จแล้ว กรุณาล็อกอินด้วยบัญชีที่สมัครไว้',
+        loginRequired: 'กรุณากรอกอีเมลและรหัสผ่าน',
+        loginUnverified: 'ต้องสมัครสมาชิกและยืนยันอีเมลก่อน จึงจะล็อกอินได้'
+      },
+      en: {
+        registerTitle: 'Create account',
+        loginTitle: 'Log in to PL CHAT',
+        verifyTitle: 'Verify email',
+        authSubtitle: 'Sign up with a personal email like a modern social app, then verify before entering.',
+        registerNotice: 'Use your personal email to receive a verification code.',
+        loginNotice: 'Only verified accounts can log in.',
+        fullName: 'Full name',
+        personalEmail: 'Personal email',
+        securePassword: 'Secure password',
+        verifiedEmail: 'Verified email',
+        password: 'Password',
+        code: '6-digit code',
+        passwordHint: 'At least 10 characters with an uppercase letter and a number.',
+        registerButton: 'Sign up and send code',
+        goLogin: 'Already have an account? Log in',
+        verifyButton: 'Verify email',
+        editRegister: 'Edit registration',
+        loginButton: 'Log in',
+        goRegister: 'No account yet? Sign up',
+        securityOne: 'Email verification is required for every signup.',
+        securityTwo: 'Only verified accounts can log in.',
+        securityThree: 'Designed for MFA, audit logs, and fake-account protection.',
+        tagline: 'Public social chat for everyone worldwide',
+        dashboard: 'Dashboard',
+        engagement: 'Engagement',
+        newPosts: 'New posts',
+        privateChats: 'Private chats',
+        shortVideos: 'Short videos',
+        feed: 'Social feed',
+        feedSubtitle: 'Short posts, short videos, and conversations everyone can join.',
+        translate: 'Translate',
+        translatedTo: 'Translated to',
+        nameRequired: 'Please enter your name.',
+        emailInvalid: 'Please enter a valid email.',
+        passwordInvalid: 'Password must be at least 10 characters with an uppercase letter and a number.',
+        codeInvalid: 'Please enter the 6-digit code from your email.',
+        codeSent: 'A 6-digit code was sent to',
+        emailCodeHelp: 'Check your inbox and enter the verification code from your email.',
+        emailCodeSent: 'Verification instructions were sent to',
+        verifySuccess: 'Email verified. Please log in with your account.',
+        loginRequired: 'Please enter your email and password.',
+        loginUnverified: 'You must sign up and verify your email before logging in.'
+      },
+      zh: {
+        registerTitle: '注册账号',
+        loginTitle: '登录 PL CHAT',
+        verifyTitle: '验证邮箱',
+        authSubtitle: '像社交平台一样使用个人邮箱注册，并在进入前完成验证。',
+        registerNotice: '使用个人邮箱接收验证码。',
+        loginNotice: '只有已验证的账号可以登录。',
+        fullName: '姓名',
+        personalEmail: '个人邮箱',
+        securePassword: '安全密码',
+        verifiedEmail: '已验证邮箱',
+        password: '密码',
+        code: '6 位验证码',
+        passwordHint: '至少 10 个字符，包含大写字母和数字。',
+        registerButton: '注册并发送验证码',
+        goLogin: '已有账号？登录',
+        verifyButton: '验证邮箱',
+        editRegister: '修改注册信息',
+        loginButton: '登录',
+        goRegister: '还没有账号？注册',
+        securityOne: '每次注册都需要验证邮箱。',
+        securityTwo: '只有已验证账号可以登录。',
+        securityThree: '支持 MFA、审计日志和防假账号机制。',
+        tagline: '面向全球所有人的公开社交聊天',
+        dashboard: '仪表板',
+        engagement: '互动',
+        newPosts: '新帖子',
+        privateChats: '私聊',
+        shortVideos: '短视频',
+        feed: '动态',
+        feedSubtitle: '短帖、短视频和所有人都可参与的对话。',
+        translate: '翻译',
+        translatedTo: '已翻译为',
+        nameRequired: '请输入姓名。',
+        emailInvalid: '请输入有效邮箱。',
+        passwordInvalid: '密码至少 10 个字符，并包含大写字母和数字。',
+        codeInvalid: '请输入邮箱中的 6 位验证码。',
+        codeSent: '6 位验证码已发送至',
+        emailCodeHelp: '请检查收件箱并输入邮件中的验证码。',
+        emailCodeSent: '验证说明已发送至',
+        verifySuccess: '邮箱验证成功，请使用账号登录。',
+        loginRequired: '请输入邮箱和密码。',
+        loginUnverified: '请先注册并验证邮箱，然后再登录。'
+      },
+      ja: { registerTitle: 'アカウント作成', loginTitle: 'PL CHAT にログイン', verifyTitle: 'メール確認', authSubtitle: '個人メールで登録し、確認後に利用できます。', registerNotice: '個人メールに確認コードを送信します。', loginNotice: '確認済みアカウントのみログインできます。', fullName: '氏名', personalEmail: '個人メール', securePassword: '安全なパスワード', verifiedEmail: '確認済みメール', password: 'パスワード', code: '6桁コード', passwordHint: '10文字以上、大文字と数字を含めてください。', registerButton: '登録してコード送信', goLogin: 'アカウントをお持ちの方', verifyButton: 'メールを確認', editRegister: '登録情報を編集', loginButton: 'ログイン', goRegister: '未登録の方はこちら', securityOne: '登録時はメール確認が必要です。', securityTwo: '確認済みアカウントのみログインできます。', securityThree: 'MFA、監査ログ、不正アカウント対策に対応できます。', tagline: 'グローバルソーシャルコミュニケーション', dashboard: 'ダッシュボード', engagement: 'エンゲージメント', newPosts: '新規投稿', privateChats: 'プライベートチャット', shortVideos: 'ショート動画', feed: 'フィード', feedSubtitle: '短い投稿、動画、誰でも参加できる会話。' },
+      ko: { registerTitle: '회원가입', loginTitle: 'PL CHAT 로그인', verifyTitle: '이메일 인증', authSubtitle: '개인 이메일로 가입하고 인증 후 이용하세요.', registerNotice: '개인 이메일로 인증 코드를 받습니다.', loginNotice: '인증된 계정만 로그인할 수 있습니다.', fullName: '이름', personalEmail: '개인 이메일', securePassword: '안전한 비밀번호', verifiedEmail: '인증된 이메일', password: '비밀번호', code: '6자리 코드', passwordHint: '10자 이상, 대문자와 숫자를 포함하세요.', registerButton: '가입하고 코드 받기', goLogin: '이미 계정이 있나요? 로그인', verifyButton: '이메일 인증', editRegister: '가입 정보 수정', loginButton: '로그인', goRegister: '계정이 없나요? 가입', securityOne: '가입 시 이메일 인증이 필요합니다.', securityTwo: '인증된 계정만 로그인할 수 있습니다.', securityThree: 'MFA, 감사 로그, 가짜 계정 방지를 지원합니다.', tagline: '글로벌 소셜 커뮤니케이션', dashboard: '대시보드', engagement: '참여', newPosts: '새 게시물', privateChats: '개인 채팅', shortVideos: '짧은 영상', feed: '피드', feedSubtitle: '짧은 게시물, 영상, 모두가 참여하는 대화.' },
+      ar: { registerTitle: 'إنشاء حساب', loginTitle: 'تسجيل الدخول إلى PL CHAT', verifyTitle: 'تأكيد البريد', authSubtitle: 'سجّل ببريدك الشخصي مثل تطبيقات التواصل، ثم أكّد هويتك قبل الدخول.', registerNotice: 'استخدم بريدك الشخصي لاستلام رمز التحقق.', loginNotice: 'يمكن للحسابات المؤكدة فقط تسجيل الدخول.', fullName: 'الاسم الكامل', personalEmail: 'البريد الشخصي', securePassword: 'كلمة مرور آمنة', verifiedEmail: 'بريد مؤكد', password: 'كلمة المرور', code: 'رمز من 6 أرقام', passwordHint: '10 أحرف على الأقل مع حرف كبير ورقم.', registerButton: 'تسجيل وإرسال الرمز', goLogin: 'لديك حساب؟ سجّل الدخول', verifyButton: 'تأكيد البريد', editRegister: 'تعديل التسجيل', loginButton: 'تسجيل الدخول', goRegister: 'ليس لديك حساب؟ سجّل', securityOne: 'تأكيد البريد مطلوب لكل تسجيل.', securityTwo: 'تسجيل الدخول للحسابات المؤكدة فقط.', securityThree: 'يدعم MFA وسجلات التدقيق ومكافحة الحسابات الوهمية.', tagline: 'تواصل اجتماعي عالمي', dashboard: 'لوحة التحكم', engagement: 'التفاعل', newPosts: 'منشورات جديدة', privateChats: 'محادثات خاصة', shortVideos: 'فيديوهات قصيرة', feed: 'الخلاصة', feedSubtitle: 'منشورات قصيرة وفيديوهات ومحادثات يشارك فيها الجميع.' },
+      es: { registerTitle: 'Crear cuenta', loginTitle: 'Entrar a PL CHAT', verifyTitle: 'Verificar email', authSubtitle: 'Regístrate con tu email personal como en una red social y verifica antes de entrar.', registerNotice: 'Usa tu email personal para recibir el código.', loginNotice: 'Solo las cuentas verificadas pueden entrar.', fullName: 'Nombre completo', personalEmail: 'Email personal', securePassword: 'Contraseña segura', verifiedEmail: 'Email verificado', password: 'Contraseña', code: 'Código de 6 dígitos', passwordHint: 'Mínimo 10 caracteres con una mayúscula y un número.', registerButton: 'Registrarme y enviar código', goLogin: 'Ya tengo cuenta', verifyButton: 'Verificar email', editRegister: 'Editar registro', loginButton: 'Entrar', goRegister: 'No tengo cuenta', securityOne: 'Cada registro requiere verificar el email.', securityTwo: 'Solo las cuentas verificadas pueden entrar.', securityThree: 'Preparado para MFA, auditoría y protección contra cuentas falsas.', tagline: 'Comunicación social global', dashboard: 'Panel', engagement: 'Interacción', newPosts: 'Publicaciones', privateChats: 'Chats privados', shortVideos: 'Videos cortos', feed: 'Feed', feedSubtitle: 'Posts, videos cortos y conversaciones para todos.' },
+      fr: { registerTitle: 'Créer un compte', loginTitle: 'Connexion à PL CHAT', verifyTitle: 'Vérifier l’e-mail', authSubtitle: 'Inscrivez-vous avec un e-mail personnel comme sur un réseau social, puis vérifiez-le.', registerNotice: 'Utilisez votre e-mail personnel pour recevoir un code.', loginNotice: 'Seuls les comptes vérifiés peuvent se connecter.', fullName: 'Nom complet', personalEmail: 'E-mail personnel', securePassword: 'Mot de passe sécurisé', verifiedEmail: 'E-mail vérifié', password: 'Mot de passe', code: 'Code à 6 chiffres', passwordHint: 'Au moins 10 caractères avec une majuscule et un chiffre.', registerButton: 'S’inscrire et envoyer le code', goLogin: 'Déjà un compte ? Connexion', verifyButton: 'Vérifier l’e-mail', editRegister: 'Modifier l’inscription', loginButton: 'Connexion', goRegister: 'Pas encore de compte ?', securityOne: 'La vérification e-mail est requise à chaque inscription.', securityTwo: 'Seuls les comptes vérifiés peuvent se connecter.', securityThree: 'Prêt pour MFA, journaux d’audit et anti-faux comptes.', tagline: 'Communication sociale mondiale', dashboard: 'Tableau de bord', engagement: 'Engagement', newPosts: 'Nouveaux posts', privateChats: 'Chats privés', shortVideos: 'Vidéos courtes', feed: 'Fil social', feedSubtitle: 'Posts courts, vidéos et conversations ouvertes.' },
+      de: { registerTitle: 'Konto erstellen', loginTitle: 'Bei PL CHAT anmelden', verifyTitle: 'E-Mail bestätigen', authSubtitle: 'Mit persönlicher E-Mail wie in sozialen Apps registrieren und vor dem Start bestätigen.', registerNotice: 'Nutze deine persönliche E-Mail für den Bestätigungscode.', loginNotice: 'Nur bestätigte Konten können sich anmelden.', fullName: 'Vollständiger Name', personalEmail: 'Persönliche E-Mail', securePassword: 'Sicheres Passwort', verifiedEmail: 'Bestätigte E-Mail', password: 'Passwort', code: '6-stelliger Code', passwordHint: 'Mindestens 10 Zeichen mit Großbuchstaben und Zahl.', registerButton: 'Registrieren und Code senden', goLogin: 'Schon ein Konto? Anmelden', verifyButton: 'E-Mail bestätigen', editRegister: 'Registrierung bearbeiten', loginButton: 'Anmelden', goRegister: 'Noch kein Konto?', securityOne: 'E-Mail-Bestätigung ist für jede Registrierung nötig.', securityTwo: 'Nur bestätigte Konten können sich anmelden.', securityThree: 'Bereit für MFA, Audit-Logs und Schutz vor Fake-Konten.', tagline: 'Globale soziale Kommunikation', dashboard: 'Dashboard', engagement: 'Engagement', newPosts: 'Neue Beiträge', privateChats: 'Private Chats', shortVideos: 'Kurzvideos', feed: 'Feed', feedSubtitle: 'Kurze Posts, Videos und Gespräche für alle.' },
+      hi: { registerTitle: 'खाता बनाएं', loginTitle: 'PL CHAT में लॉग इन करें', verifyTitle: 'ईमेल सत्यापित करें', authSubtitle: 'सोशल ऐप की तरह निजी ईमेल से साइन अप करें और प्रवेश से पहले सत्यापित करें।', registerNotice: 'सत्यापन कोड पाने के लिए निजी ईमेल इस्तेमाल करें।', loginNotice: 'केवल सत्यापित खाते लॉग इन कर सकते हैं।', fullName: 'पूरा नाम', personalEmail: 'निजी ईमेल', securePassword: 'सुरक्षित पासवर्ड', verifiedEmail: 'सत्यापित ईमेल', password: 'पासवर्ड', code: '6 अंकों का कोड', passwordHint: 'कम से कम 10 अक्षर, एक बड़ा अक्षर और एक संख्या।', registerButton: 'साइन अप करें और कोड भेजें', goLogin: 'पहले से खाता है? लॉग इन', verifyButton: 'ईमेल सत्यापित करें', editRegister: 'पंजीकरण संपादित करें', loginButton: 'लॉग इन', goRegister: 'खाता नहीं है? साइन अप', securityOne: 'हर साइन अप पर ईमेल सत्यापन आवश्यक है।', securityTwo: 'केवल सत्यापित खाते लॉग इन कर सकते हैं।', securityThree: 'MFA, audit log और fake-account protection के लिए तैयार।', tagline: 'वैश्विक सामाजिक संचार', dashboard: 'डैशबोर्ड', engagement: 'सहभागिता', newPosts: 'नई पोस्ट', privateChats: 'निजी चैट', shortVideos: 'छोटे वीडियो', feed: 'फ़ीड', feedSubtitle: 'छोटी पोस्ट, वीडियो और बातचीत जिसमें सभी शामिल हों।' },
+      vi: { registerTitle: 'Tạo tài khoản', loginTitle: 'Đăng nhập PL CHAT', verifyTitle: 'Xác minh email', authSubtitle: 'Đăng ký bằng email cá nhân như mạng xã hội và xác minh trước khi vào.', registerNotice: 'Dùng email cá nhân để nhận mã xác minh.', loginNotice: 'Chỉ tài khoản đã xác minh mới đăng nhập được.', fullName: 'Họ và tên', personalEmail: 'Email cá nhân', securePassword: 'Mật khẩu an toàn', verifiedEmail: 'Email đã xác minh', password: 'Mật khẩu', code: 'Mã 6 chữ số', passwordHint: 'Ít nhất 10 ký tự, có chữ hoa và số.', registerButton: 'Đăng ký và gửi mã', goLogin: 'Đã có tài khoản? Đăng nhập', verifyButton: 'Xác minh email', editRegister: 'Sửa đăng ký', loginButton: 'Đăng nhập', goRegister: 'Chưa có tài khoản? Đăng ký', securityOne: 'Mỗi đăng ký cần xác minh email.', securityTwo: 'Chỉ tài khoản đã xác minh mới đăng nhập được.', securityThree: 'Sẵn sàng cho MFA, audit log và chống tài khoản giả.', tagline: 'Giao tiếp xã hội toàn cầu', dashboard: 'Bảng điều khiển', engagement: 'Tương tác', newPosts: 'Bài mới', privateChats: 'Chat riêng', shortVideos: 'Video ngắn', feed: 'Bảng tin', feedSubtitle: 'Bài ngắn, video ngắn và cuộc trò chuyện cho mọi người.' },
+      id: { registerTitle: 'Buat akun', loginTitle: 'Masuk ke PL CHAT', verifyTitle: 'Verifikasi email', authSubtitle: 'Daftar dengan email pribadi seperti aplikasi sosial, lalu verifikasi sebelum masuk.', registerNotice: 'Gunakan email pribadi untuk menerima kode verifikasi.', loginNotice: 'Hanya akun terverifikasi yang bisa masuk.', fullName: 'Nama lengkap', personalEmail: 'Email pribadi', securePassword: 'Kata sandi aman', verifiedEmail: 'Email terverifikasi', password: 'Kata sandi', code: 'Kode 6 digit', passwordHint: 'Minimal 10 karakter dengan huruf besar dan angka.', registerButton: 'Daftar dan kirim kode', goLogin: 'Sudah punya akun? Masuk', verifyButton: 'Verifikasi email', editRegister: 'Edit pendaftaran', loginButton: 'Masuk', goRegister: 'Belum punya akun? Daftar', securityOne: 'Verifikasi email diperlukan saat daftar.', securityTwo: 'Hanya akun terverifikasi yang dapat masuk.', securityThree: 'Siap untuk MFA, audit log, dan perlindungan akun palsu.', tagline: 'Komunikasi sosial global', dashboard: 'Dasbor', engagement: 'Interaksi', newPosts: 'Posting baru', privateChats: 'Chat pribadi', shortVideos: 'Video pendek', feed: 'Feed', feedSubtitle: 'Posting pendek, video pendek, dan percakapan untuk semua.' },
+      lo: { registerTitle: 'ສ້າງບັນຊີ', loginTitle: 'ເຂົ້າສູ່ PL CHAT', verifyTitle: 'ຢືນຢັນອີເມວ', authSubtitle: 'ສະໝັກດ້ວຍອີເມວສ່ວນຕົວ ແລະຢືນຢັນກ່ອນໃຊ້ງານ.', registerNotice: 'ໃຊ້ອີເມວສ່ວນຕົວເພື່ອຮັບລະຫັດຢືນຢັນ.', loginNotice: 'ບັນຊີທີ່ຢືນຢັນແລ້ວເທົ່ານັ້ນຈຶ່ງເຂົ້າໄດ້.', fullName: 'ຊື່ແລະນາມສະກຸນ', personalEmail: 'ອີເມວສ່ວນຕົວ', securePassword: 'ລະຫັດຜ່ານປອດໄພ', verifiedEmail: 'ອີເມວທີ່ຢືນຢັນແລ້ວ', password: 'ລະຫັດຜ່ານ', code: 'ລະຫັດ 6 ໂຕ', passwordHint: 'ຢ່າງນ້ອຍ 10 ຕົວອັກສອນ ມີຕົວໃຫຍ່ ແລະຕົວເລກ.', registerButton: 'ສະໝັກແລະສົ່ງລະຫັດ', goLogin: 'ມີບັນຊີແລ້ວ', verifyButton: 'ຢືນຢັນອີເມວ', editRegister: 'ແກ້ໄຂການສະໝັກ', loginButton: 'ເຂົ້າສູ່ລະບົບ', goRegister: 'ຍັງບໍ່ມີບັນຊີ', securityOne: 'ຕ້ອງຢືນຢັນອີເມວໃນການສະໝັກ.', securityTwo: 'ບັນຊີຢືນຢັນແລ້ວເທົ່ານັ້ນເຂົ້າໄດ້.', securityThree: 'ຮອງຮັບ MFA, audit log ແລະກັນບັນຊີປອມ.', tagline: 'ການສື່ສານສັງຄົມທົ່ວໂລກ', dashboard: 'ແດຊບອດ', engagement: 'ການມີສ່ວນຮ່ວມ', newPosts: 'ໂພສໃໝ່', privateChats: 'ແຊັດສ່ວນຕົວ', shortVideos: 'ວິດີໂອສັ້ນ', feed: 'ຟີດ', feedSubtitle: 'ໂພສສັ້ນ ວິດີໂອສັ້ນ ແລະການສົນທະນາ.' },
+      km: { registerTitle: 'បង្កើតគណនី', loginTitle: 'ចូល PL CHAT', verifyTitle: 'ផ្ទៀងផ្ទាត់អ៊ីមែល', authSubtitle: 'ចុះឈ្មោះដោយអ៊ីមែលផ្ទាល់ខ្លួន ហើយផ្ទៀងផ្ទាត់មុនចូលប្រើ។', registerNotice: 'ប្រើអ៊ីមែលផ្ទាល់ខ្លួនដើម្បីទទួលលេខកូដ។', loginNotice: 'មានតែគណនីដែលបានផ្ទៀងផ្ទាត់ប៉ុណ្ណោះអាចចូលបាន។', fullName: 'ឈ្មោះពេញ', personalEmail: 'អ៊ីមែលផ្ទាល់ខ្លួន', securePassword: 'ពាក្យសម្ងាត់សុវត្ថិភាព', verifiedEmail: 'អ៊ីមែលបានផ្ទៀងផ្ទាត់', password: 'ពាក្យសម្ងាត់', code: 'លេខកូដ 6 ខ្ទង់', passwordHint: 'យ៉ាងតិច 10 តួអក្សរ មានអក្សរធំ និងលេខ។', registerButton: 'ចុះឈ្មោះ និងផ្ញើកូដ', goLogin: 'មានគណនីហើយ? ចូល', verifyButton: 'ផ្ទៀងផ្ទាត់អ៊ីមែល', editRegister: 'កែប្រែការចុះឈ្មោះ', loginButton: 'ចូល', goRegister: 'មិនទាន់មានគណនី?', securityOne: 'ត្រូវផ្ទៀងផ្ទាត់អ៊ីមែលពេលចុះឈ្មោះ។', securityTwo: 'មានតែគណនីបានផ្ទៀងផ្ទាត់អាចចូលបាន។', securityThree: 'រួចរាល់សម្រាប់ MFA, audit log និងការពារគណនីក្លែងក្លាយ។', tagline: 'ទំនាក់ទំនងសង្គមសកល', dashboard: 'ផ្ទាំងគ្រប់គ្រង', engagement: 'ការចូលរួម', newPosts: 'ប្រកាសថ្មី', privateChats: 'ជជែកឯកជន', shortVideos: 'វីដេអូខ្លី', feed: 'Feed', feedSubtitle: 'ប្រកាសខ្លី វីដេអូខ្លី និងការសន្ទនា។' }
+    };
+
+    function resolveLanguage(value) {
+      const raw = value === 'auto' ? navigator.language : value;
+      const code = String(raw || 'en').toLowerCase().split('-')[0];
+      return translations[code] ? code : 'en';
+    }
+
+    function t(key) {
+      const lang = resolveLanguage(localStorage.getItem('plchatLanguage') || 'auto');
+      return (translations[lang] && translations[lang][key]) || translations.en[key] || key;
+    }
+
+    function setText(key, value) {
+      translations.th[key] = value;
+    }
+
+    function applyLanguage() {
+      const selected = localStorage.getItem('plchatLanguage') || 'auto';
+      const lang = resolveLanguage(selected);
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.getElementById('languageSelect').value = selected;
+      document.querySelectorAll('[data-i18n]').forEach((element) => {
+        element.textContent = t(element.dataset.i18n);
+      });
+      document.getElementById('fullNameInput').placeholder = t('fullName');
+      document.getElementById('registerEmailInput').placeholder = t('personalEmail');
+      document.getElementById('registerPasswordInput').placeholder = t('securePassword');
+      document.getElementById('loginEmailInput').placeholder = t('verifiedEmail');
+      document.getElementById('loginPasswordInput').placeholder = t('password');
+      document.getElementById('verificationInput').placeholder = t('code');
+      document.getElementById('translateThreadBtn').textContent = `🌐 ${t('translate')}`;
+      if (state.mode === 'register') setNotice(t('registerNotice'));
+      if (state.mode === 'login') setNotice(t('loginNotice'));
+      if (state.mode === 'verify' && state.pendingEmail) setNotice(`${t('emailCodeSent')} (${state.pendingEmail})`);
+      if (state.currentEmail) {
+        document.getElementById('currentEmail').textContent = state.currentEmail;
+      }
+      renderMessages();
+      renderPosts();
+      if (!state.currentEmail) {
+        setMode(state.mode);
+      }
+    }
+
+    const contentTranslations = {
+      'สวัสดีจากกรุงเทพ วันนี้ใครมีคลิปหรือไฟล์ใหญ่แชร์ได้เลย': {
+        en: 'Hello from Bangkok. If you have clips or large files today, feel free to share them.',
+        zh: '来自曼谷的问候。今天如果有短视频或大文件，欢迎分享。',
+        ja: 'バンコクからこんにちは。動画や大容量ファイルがあれば共有してください。',
+        ko: '방콕에서 인사드립니다. 오늘 클립이나 큰 파일이 있으면 공유해 주세요.',
+        ar: 'مرحباً من بانكوك. إذا كانت لديك مقاطع أو ملفات كبيرة اليوم، يمكنك مشاركتها.',
+        es: 'Hola desde Bangkok. Si tienes clips o archivos grandes, compártelos.',
+        fr: 'Bonjour de Bangkok. Si vous avez des clips ou de gros fichiers, partagez-les.',
+        de: 'Hallo aus Bangkok. Wenn du Clips oder große Dateien hast, teile sie gern.'
+      },
+      'ผมอัปโหลดวิดีโอโปรเจกต์ใหม่ไว้ใน Cloud File แล้ว': {
+        en: 'I uploaded the new project video to Cloud File.',
+        zh: '我已经把新的项目视频上传到 Cloud File。',
+        ja: '新しいプロジェクト動画を Cloud File にアップロードしました。',
+        ko: '새 프로젝트 영상을 Cloud File에 업로드했습니다.'
+      },
+      'ดีมาก เดี๋ยวลองเปิดดูและแชร์ต่อให้เพื่อนครับ': {
+        en: 'Great. I will open it and share it with friends.',
+        zh: '太好了，我会打开看看并分享给朋友。',
+        ja: 'いいですね。確認して友人に共有します。',
+        ko: '좋아요. 열어보고 친구들에게 공유하겠습니다.'
+      },
+      'สรุปการประชุมวันนี้มี 3 ประเด็นหลักนะ': {
+        en: 'Today’s meeting has three main points.',
+        zh: '今天的演示有三个重点。',
+        ja: '今日のデモには主なポイントが3つあります。',
+        ko: '오늘 데모에는 세 가지 핵심 포인트가 있습니다.'
+      },
+      'ผมเพิ่ม note เรื่อง onboarding ไว้แล้ว': {
+        en: 'I added the note about onboarding.',
+        zh: '我已经添加了入职说明。',
+        ja: 'オンボーディングのメモを追加しました。',
+        ko: '온보딩 관련 노트를 추가했습니다.'
+      },
+      'ขอรวบรวม feedback ก่อนบ่ายสอง': {
+        en: 'Please collect the feedback before 2 PM.',
+        zh: '请在下午两点前汇总反馈。',
+        ja: '午後2時までにフィードバックをまとめてください。',
+        ko: '오후 2시 전까지 피드백을 모아 주세요.'
+      },
+      'traffic เช้านี้สูงกว่าปกติ 18%': {
+        en: 'Traffic this morning is 18% higher than usual.',
+        zh: '今天早上的流量比平时高 18%。'
+      },
+      'ปรับ capacity แล้วครับ': {
+        en: 'Capacity has been adjusted.',
+        zh: '容量已经调整。'
+      },
+      'ระบบกลับมาปกติแล้ว': {
+        en: 'The system is back to normal.',
+        zh: '系统已恢复正常。'
+      },
+      'ส่งไฟล์สรุปให้แล้วนะ ดูได้ตอนสะดวกเลย': {
+        en: 'I sent the summary file. Please review it when convenient.',
+        zh: '我已经发送了总结文件，方便时请查看。'
+      },
+      'ขอบคุณมาก เดี๋ยวอ่านแล้วตอบกลับครับ': {
+        en: 'Thank you. I will read it and reply.',
+        zh: '谢谢，我看完后回复。'
+      },
+      'ถ้ามีจุดไหนอยากแก้ คุยในนี้ได้เลย': {
+        en: 'If anything needs changes, we can discuss it here.',
+        zh: '如果有需要修改的地方，可以在这里讨论。'
+      },
+      'คุยต่อหลังประชุมได้เลยนะ': {
+        en: 'We can continue after the meeting.',
+        zh: '会议后我们可以继续聊。'
+      },
+      'ได้ครับ ผมจะสรุปประเด็นไว้ให้ก่อน': {
+        en: 'Sure, I will summarize the points first.',
+        zh: '好的，我会先整理重点。'
+      },
+      'ทริปวันนี้สวยมาก อัปโหลดรูปชุดใหญ่ไว้ให้เพื่อนดูแล้ว': {
+        en: 'Today’s trip was beautiful. I uploaded a large photo set for friends to view.',
+        zh: '今天的旅行很美。我已经上传了一大组照片给朋友看。'
+      },
+      'สรุป 3 เทคนิคทำคลิปไวรัลใน 30 วินาที ดูแล้วกดแชร์ให้เพื่อนได้เลย': {
+        en: 'Three viral short-video tips in 30 seconds. Watch and share with friends.',
+        zh: '30 秒总结 3 个 viral 短视频技巧。看完可以分享给朋友。'
+      },
+      'ส่งไฟล์ออกแบบขนาดใหญ่ให้ลูกค้าแล้ว ลิงก์ปลอดภัยเปิดได้ทุกอุปกรณ์': {
+        en: 'The large design file has been sent. The secure link opens on every device.',
+        zh: '大型设计文件已发送。安全链接可在所有设备上打开。'
+      },
+      'วันนี้ได้เพื่อนใหม่จากหลายประเทศ แปลภาษาในแชทช่วยได้มาก': {
+        en: 'I made new friends from many countries today. Chat translation helps a lot.',
+        zh: '今天认识了来自多个国家的新朋友。聊天翻译很有帮助。'
+      }
+    };
+
+    function activeLanguage() {
+      return resolveLanguage(localStorage.getItem('plchatLanguage') || 'auto');
+    }
+
+    function translateContent(text) {
+      const lang = activeLanguage();
+      if (lang === 'th') return text;
+      return (contentTranslations[text] && (contentTranslations[text][lang] || contentTranslations[text].en)) || text;
+    }
+
+    function translatedNote() {
+      const label = document.getElementById('languageSelect').selectedOptions[0]?.textContent || activeLanguage();
+      return `${t('translatedTo')} ${label}`;
+    }
+
+    const state = {
+      mode: 'register',
+      pendingEmail: '',
+      pendingName: '',
+      registeredEmails: JSON.parse(localStorage.getItem('plchatVerifiedEmails') || '[]'),
+      currentEmail: '',
+      profile: JSON.parse(localStorage.getItem('plchatPublicProfile') || 'null'),
+      roomSettings: JSON.parse(localStorage.getItem('plchatRoomSettings') || '{}'),
+      selectedRoom: 'global',
+      selectedMood: 'ดีใจ',
+      autoTranslate: JSON.parse(localStorage.getItem('plchatAutoTranslate') || 'false'),
+      rooms: {
+        global: {
+          title: 'Global Square',
+          scope: 'ชุมชนสาธารณะทั่วโลก',
+          messages: [
+            { sender: 'Maya', text: 'สวัสดีจากกรุงเทพ วันนี้ใครมีคลิปหรือไฟล์ใหญ่แชร์ได้เลย', time: '09:32' },
+            { sender: 'Leo', text: 'ผมอัปโหลดวิดีโอโปรเจกต์ใหม่ไว้ใน Cloud File แล้ว', time: '09:34' },
+            { sender: 'คุณ', text: 'ดีมาก เดี๋ยวลองเปิดดูและแชร์ต่อให้เพื่อนครับ', time: '09:45', mine: true }
+          ]
+        },
+        creator: {
+          title: 'Creator Hub',
+          scope: 'ชุมชนครีเอเตอร์สาธารณะ',
+          messages: [
+            { sender: 'Mina', text: 'วันนี้มีเทรนด์คลิปสั้นใหม่ ใครทำแล้วแชร์เข้าฟีดได้เลย', time: '10:02' },
+            { sender: 'Jay', text: 'ผมทำ template สำหรับตัดต่อไว้แล้ว ส่งเป็นไฟล์ใหญ่ได้', time: '10:08' },
+            { sender: 'Mina', text: 'เยี่ยมเลย กดแชร์ให้ชุมชนดูต่อได้ทันที', time: '10:12' }
+          ]
+        },
+        filedrop: {
+          title: 'Large File Drop',
+          scope: 'ส่งไฟล์ใหญ่และไฟล์โปรเจกต์',
+          messages: [
+            { sender: 'Nok', text: 'ไฟล์วิดีโอ 4K อัปโหลดผ่าน cloud storage ได้แล้ว', time: '08:20' },
+            { sender: 'Beam', text: 'ระบบจะแชร์ลิงก์ปลอดภัยให้คนรับโดยอัตโนมัติ', time: '08:44' },
+            { sender: 'Nok', text: 'รองรับ pause และ resume สำหรับไฟล์ใหญ่ในระบบจริง', time: '08:55' }
+          ]
+        },
+        'private-nam': {
+          title: 'Nam · แชทส่วนตัว',
+          scope: 'เข้ารหัสและเห็นเฉพาะคู่สนทนา',
+          messages: [
+            { sender: 'Nam', text: 'ส่งไฟล์สรุปให้แล้วนะ ดูได้ตอนสะดวกเลย', time: '11:20' },
+            { sender: 'คุณ', text: 'ขอบคุณมาก เดี๋ยวอ่านแล้วตอบกลับครับ', time: '11:22', mine: true },
+            { sender: 'Nam', text: 'ถ้ามีจุดไหนอยากแก้ คุยในนี้ได้เลย', time: '11:24' }
+          ]
+        },
+        'private-korn': {
+          title: 'Korn · แชทส่วนตัว',
+          scope: 'เข้ารหัสและเห็นเฉพาะคู่สนทนา',
+          messages: [
+            { sender: 'Korn', text: 'คุยต่อหลังประชุมได้เลยนะ', time: '10:40' },
+            { sender: 'คุณ', text: 'ได้ครับ ผมจะสรุปประเด็นไว้ให้ก่อน', time: '10:42', mine: true }
+          ]
+        }
+      },
+      posts: [
+        { author: 'Ploy', team: 'Travel', mood: 'ดีใจ', text: 'ทริปวันนี้สวยมาก อัปโหลดรูปชุดใหญ่ไว้ให้เพื่อนดูแล้ว', time: '12 นาทีที่แล้ว', reactions: 18, comments: 4, shares: 3, kind: 'post' },
+        { author: 'Beam', team: 'Creator', mood: 'คลิปสั้น', text: 'สรุป 3 เทคนิคทำคลิปไวรัลใน 30 วินาที ดูแล้วกดแชร์ให้เพื่อนได้เลย', time: '22 นาทีที่แล้ว', reactions: 42, comments: 11, shares: 8, kind: 'video' },
+        { author: 'Win', team: 'Design', mood: 'กำลังทำงาน', text: 'ส่งไฟล์ออกแบบขนาดใหญ่ให้ลูกค้าแล้ว ลิงก์ปลอดภัยเปิดได้ทุกอุปกรณ์', time: '38 นาทีที่แล้ว', reactions: 9, comments: 2, shares: 1, kind: 'post' },
+        { author: 'Ann', team: 'Community', mood: 'ขอบคุณ', text: 'วันนี้ได้เพื่อนใหม่จากหลายประเทศ แปลภาษาในแชทช่วยได้มาก', time: '1 ชม.ที่แล้ว', reactions: 24, comments: 7, shares: 2, kind: 'post' }
+      ],
+      assistantMessages: [
+        { role: 'assistant', text: 'สวัสดีครับ ผมคือ ChatGPT Assistant ใน PL CHAT ช่วยสรุปแชท แปลภาษา เขียนโพสต์ วางแผนงาน และตอบคำถามส่วนตัวของผู้ใช้แต่ละคนได้' }
+      ]
+    };
+
+    const moodOptions = ['ดีใจ', 'สงบ', 'ขอบคุณ', 'กังวล', 'เหนื่อย'];
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const assistantApiUrl = localStorage.getItem('plchatAssistantApiUrl') || 'http://localhost:8787/api/assistant/chat';
+
+    Object.entries(state.roomSettings || {}).forEach(([roomId, settings]) => {
+      if (!state.rooms[roomId]) return;
+      state.rooms[roomId] = { ...state.rooms[roomId], ...settings };
+    });
+
+    function defaultProfile(email) {
+      const base = (email || 'plchat-user').split('@')[0].replace(/[^a-zA-Z0-9_.-]/g, '') || 'plchat-user';
+      return {
+        displayName: state.pendingName || base,
+        username: base.toLowerCase(),
+        bio: 'ยินดีที่ได้รู้จักบน PL CHAT',
+        link: `plchat.app/${base.toLowerCase()}`,
+        status: 'พร้อมคุยและแชร์ไอเดีย'
+      };
+    }
+
+    function normalizeProfile(profile, email) {
+      return { ...defaultProfile(email), ...(profile || {}) };
+    }
+
+    function setNotice(text) {
+      document.getElementById('noticeText').textContent = text;
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      document.getElementById('registerForm').classList.toggle('hidden', mode !== 'register');
+      document.getElementById('verifyForm').classList.toggle('hidden', mode !== 'verify');
+      document.getElementById('loginForm').classList.toggle('hidden', mode !== 'login');
+      document.getElementById('authTitle').textContent = mode === 'login' ? t('loginTitle') : mode === 'verify' ? t('verifyTitle') : t('registerTitle');
+      if (mode === 'register') setNotice(t('registerNotice'));
+      if (mode === 'login') setNotice(t('loginNotice'));
+    }
+
+    function showApp(email) {
+      state.currentEmail = email;
+      state.profile = normalizeProfile(state.profile, email);
+      document.getElementById('currentEmail').textContent = email;
+      document.getElementById('authPage').classList.add('hidden');
+      document.getElementById('appPage').classList.remove('hidden');
+      renderRooms();
+      renderProfile();
+      renderMessages();
+      renderMoodChoices();
+      renderPosts();
+      renderAssistant();
+    }
+
+    function renderProfile() {
+      state.profile = normalizeProfile(state.profile, state.currentEmail);
+      const initial = (state.profile.displayName || 'P').slice(0, 1).toUpperCase();
+      const avatarHtml = state.profile.photo ? `<img src="${state.profile.photo}" alt="">` : initial;
+      document.getElementById('profileAvatar').innerHTML = avatarHtml;
+      document.getElementById('publicProfileAvatar').innerHTML = avatarHtml;
+      document.getElementById('profileDisplayName').textContent = state.profile.displayName;
+      document.getElementById('profileUsername').textContent = `@${state.profile.username}`;
+      document.getElementById('profileNameInput').value = state.profile.displayName;
+      document.getElementById('profileUsernameInput').value = state.profile.username;
+      document.getElementById('profileBioInput').value = state.profile.bio;
+      document.getElementById('profileLinkInput').value = state.profile.link;
+      document.getElementById('profileStatusInput').value = state.profile.status;
+      document.getElementById('publicProfileName').textContent = state.profile.displayName;
+      document.getElementById('publicProfileUsername').textContent = `@${state.profile.username}`;
+      document.getElementById('publicProfileBio').textContent = state.profile.bio;
+      document.getElementById('publicProfileLink').textContent = state.profile.link;
+      document.getElementById('publicProfileStatus').textContent = state.profile.status;
+    }
+
+    function renderRooms() {
+      document.querySelectorAll('.room').forEach((button) => {
+        const room = state.rooms[button.dataset.room];
+        if (!room) return;
+        const last = room.messages[room.messages.length - 1];
+        button.querySelector('.room-name').textContent = room.title;
+        button.querySelector('.room-last').textContent = last ? last.text : room.scope;
+      });
+    }
+
+    function renderAssistant() {
+      const log = document.getElementById('assistantLog');
+      if (!log) return;
+      log.innerHTML = '';
+      state.assistantMessages.forEach((message) => {
+        const row = document.createElement('div');
+        row.className = `assistant-msg ${message.role === 'user' ? 'user' : 'ai'}`;
+        row.textContent = message.text;
+        log.appendChild(row);
+      });
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function localAssistantReply(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('แปล') || lower.includes('translate')) {
+        return 'ได้ครับ ส่งข้อความที่ต้องการแปลมาได้เลย ผมจะแปลให้เป็นภาษาที่คุณตั้งค่าไว้ และในระบบจริงจะเรียก OpenAI API จากเซิร์ฟเวอร์ของ PL CHAT';
+      }
+      if (lower.includes('โพสต์') || lower.includes('post')) {
+        return 'ตัวอย่างโพสต์: วันนี้มีเรื่องดี ๆ อยากแชร์กับทุกคนใน PL CHAT พร้อมรูปหรือไฟล์แนบได้เลย กดไลค์ คอมเมนต์ และแชร์ต่อได้ทันที';
+      }
+      if (lower.includes('สรุป') || lower.includes('summary')) {
+        return 'สรุปเบื้องต้น: มีแชทส่วนตัว ฟีดสาธารณะ การแปลอัตโนมัติ ส่งไฟล์ใหญ่ และผู้ช่วย ChatGPT ส่วนตัวสำหรับผู้ใช้ทุกคน';
+      }
+      return 'ผมพร้อมช่วยครับ ในเวอร์ชันจริงข้อความนี้จะถูกส่งไปยัง OpenAI Responses API ผ่านเซิร์ฟเวอร์ที่เก็บ API key อย่างปลอดภัย';
+    }
+
+    async function askAssistant(text) {
+      const status = document.getElementById('assistantStatus');
+      status.textContent = 'กำลังคิด';
+      try {
+        const response = await fetch(assistantApiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: state.currentEmail || 'preview-user',
+            language: activeLanguage(),
+            message: text
+          })
+        });
+        if (!response.ok) throw new Error('assistant api unavailable');
+        const data = await response.json();
+        status.textContent = 'เชื่อมต่อ API';
+        return data.reply || localAssistantReply(text);
+      } catch (error) {
+        status.textContent = 'โหมดพรีวิว';
+        return localAssistantReply(text);
+      }
+    }
+
+    function renderMessages() {
+      const room = state.rooms[state.selectedRoom];
+      document.getElementById('roomTitle').textContent = room.title;
+      document.getElementById('roomScope').textContent = room.scope;
+      document.getElementById('roomNameInput').value = room.title;
+      document.getElementById('roomScopeInput').value = room.scope;
+      document.getElementById('translateThreadBtn').classList.toggle('active', state.autoTranslate);
+      const messages = document.getElementById('messages');
+      messages.innerHTML = '';
+      room.messages.forEach((message) => {
+        const shownText = state.autoTranslate ? translateContent(message.text) : message.text;
+        const note = state.autoTranslate && shownText !== message.text ? `<div class="translated-note">${translatedNote()}</div>` : '';
+        const row = document.createElement('div');
+        row.className = 'msg-row' + (message.mine ? ' mine' : '');
+        if (!message.mine) {
+          const avatar = document.createElement('div');
+          avatar.className = 'avatar';
+          avatar.textContent = message.sender.slice(0, 1).toUpperCase();
+          row.appendChild(avatar);
+        }
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble' + (message.mine ? ' mine' : '');
+        const sender = message.mine ? '' : `<div class="sender">${message.sender}</div>`;
+        bubble.innerHTML = `${sender}<div>${shownText}</div>${note}<div class="meta">${message.time}${message.mine ? ' ✓✓' : ''}</div>`;
+        row.appendChild(bubble);
+        messages.appendChild(row);
+      });
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function renderMoodChoices() {
+      const choices = document.getElementById('moodChoices');
+      choices.innerHTML = '';
+      moodOptions.forEach((mood) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'mood-chip' + (state.selectedMood === mood ? ' active' : '');
+        button.textContent = mood;
+        button.addEventListener('click', () => {
+          state.selectedMood = mood;
+          renderMoodChoices();
+        });
+        choices.appendChild(button);
+      });
+    }
+
+    function renderPosts() {
+      const posts = document.getElementById('posts');
+      posts.innerHTML = '';
+      state.posts.forEach((post) => {
+        const card = document.createElement('article');
+        card.className = 'post-card' + (post.kind === 'video' ? ' video-post' : '');
+        const media = post.kind === 'video' ? '<div class="post-media">▶ คลิปสั้น</div>' : '';
+        const shownText = state.autoTranslate ? translateContent(post.text) : post.text;
+        const note = state.autoTranslate && shownText !== post.text ? `<div class="translated-note">${translatedNote()}</div>` : '';
+        card.innerHTML = `
+          <div class="post-top">
+            <div class="avatar">${post.author.slice(0, 1).toUpperCase()}</div>
+            <div class="post-copy"><strong>${post.author}</strong><p class="subtle">${post.team} · ${post.time}</p></div>
+            <span class="mood-label">${post.mood}</span>
+          </div>
+          <p>${shownText}</p>
+          ${note}
+          ${media}
+          <div class="social-actions">
+            <button type="button" data-action="like">❤ ${post.reactions}</button>
+            <button type="button">💬 ${post.comments || 0}</button>
+            <button type="button" data-action="share">↗ แชร์ ${post.shares || 0}</button>
+            <button type="button" data-action="translate">🌐 ${t('translate')}</button>
+          </div>
+        `;
+        posts.appendChild(card);
+      });
+      document.querySelectorAll('[data-action="like"]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const number = Number(button.textContent.replace(/\D/g, '')) || 0;
+          button.textContent = `❤ ${number + 1}`;
+          button.classList.add('active');
+          const engagement = document.getElementById('engagementCount');
+          engagement.textContent = String(Number(engagement.textContent) + 1);
+        });
+      });
+      document.querySelectorAll('[data-action="share"]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const number = Number(button.textContent.replace(/\D/g, '')) || 0;
+          button.textContent = `↗ แชร์ ${number + 1}`;
+          const engagement = document.getElementById('engagementCount');
+          engagement.textContent = String(Number(engagement.textContent) + 1);
+        });
+      });
+      document.querySelectorAll('[data-action="translate"]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.autoTranslate = !state.autoTranslate;
+          localStorage.setItem('plchatAutoTranslate', JSON.stringify(state.autoTranslate));
+          renderMessages();
+          renderPosts();
+        });
+      });
+    }
+
+    document.querySelectorAll('[data-mode]').forEach((button) => {
+      button.addEventListener('click', () => setMode(button.dataset.mode));
+    });
+
+    document.getElementById('languageSelect').addEventListener('change', (event) => {
+      localStorage.setItem('plchatLanguage', event.target.value);
+      applyLanguage();
+    });
+
+    document.getElementById('translateThreadBtn').addEventListener('click', () => {
+      state.autoTranslate = !state.autoTranslate;
+      localStorage.setItem('plchatAutoTranslate', JSON.stringify(state.autoTranslate));
+      renderMessages();
+      renderPosts();
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const fullName = document.getElementById('fullNameInput').value.trim();
+      const email = document.getElementById('registerEmailInput').value.trim().toLowerCase();
+      const password = document.getElementById('registerPasswordInput').value;
+      const strongPassword = password.length >= 10 && /[A-Z]/.test(password) && /\d/.test(password);
+      if (!fullName) return setNotice(t('nameRequired'));
+      if (!emailPattern.test(email)) return setNotice(t('emailInvalid'));
+      if (!strongPassword) return setNotice(t('passwordInvalid'));
+      state.pendingEmail = email;
+      state.pendingName = fullName;
+      document.getElementById('pendingEmailText').textContent = email;
+      document.getElementById('verificationInput').value = '';
+      setMode('verify');
+      setNotice(`${t('emailCodeSent')} (${email})`);
+    });
+
+    document.getElementById('verifyForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const code = document.getElementById('verificationInput').value.trim();
+      if (!/^\d{6}$/.test(code)) return setNotice(t('codeInvalid'));
+      if (!state.registeredEmails.includes(state.pendingEmail)) {
+        state.registeredEmails.push(state.pendingEmail);
+        localStorage.setItem('plchatVerifiedEmails', JSON.stringify(state.registeredEmails));
+      }
+      document.getElementById('loginEmailInput').value = state.pendingEmail;
+      document.getElementById('loginPasswordInput').value = '';
+      setMode('login');
+      setNotice(t('verifySuccess'));
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
+      const password = document.getElementById('loginPasswordInput').value.trim();
+      if (!emailPattern.test(email) || !password) return setNotice(t('loginRequired'));
+      if (!state.registeredEmails.includes(email)) return setNotice(t('loginUnverified'));
+      showApp(email);
+    });
+
+    document.querySelectorAll('.room').forEach((button) => {
+      button.addEventListener('click', () => {
+        state.selectedRoom = button.dataset.room;
+        document.querySelectorAll('.room').forEach((room) => room.classList.remove('active'));
+        button.classList.add('active');
+        const badge = button.querySelector('.badge');
+        if (badge) badge.remove();
+        renderMessages();
+        showMobileTab('chat');
+      });
+    });
+
+    document.getElementById('messageForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      if (!text) return;
+      state.rooms[state.selectedRoom].messages.push({ sender: 'คุณ', text, time: 'ตอนนี้', mine: true });
+      input.value = '';
+      renderMessages();
+      renderRooms();
+    });
+
+    document.getElementById('publishMoodBtn').addEventListener('click', () => {
+      const input = document.getElementById('moodInput');
+      const text = input.value.trim();
+      if (!text) return;
+      state.posts.unshift({ author: state.profile?.displayName || 'คุณ', team: `@${state.profile?.username || 'plchat'}`, mood: state.selectedMood, text, time: 'ตอนนี้', reactions: 0, comments: 0, shares: 0, kind: 'post' });
+      input.value = '';
+      renderPosts();
+    });
+
+    document.getElementById('profileForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const displayName = document.getElementById('profileNameInput').value.trim() || defaultProfile(state.currentEmail).displayName;
+      const username = document.getElementById('profileUsernameInput').value
+        .trim()
+        .replace(/^@+/, '')
+        .replace(/[^a-zA-Z0-9_.-]/g, '')
+        .slice(0, 24) || defaultProfile(state.currentEmail).username;
+      state.profile = {
+        displayName,
+        username,
+        bio: document.getElementById('profileBioInput').value.trim() || 'ยินดีที่ได้รู้จักบน PL CHAT',
+        link: document.getElementById('profileLinkInput').value.trim() || `plchat.app/${username}`,
+        status: document.getElementById('profileStatusInput').value.trim() || 'พร้อมคุย',
+        photo: state.profile?.photo || ''
+      };
+      localStorage.setItem('plchatPublicProfile', JSON.stringify(state.profile));
+      renderProfile();
+      setNotice('บันทึกโปรไฟล์แล้ว เพื่อนและผู้ติดตามจะเห็นข้อมูลล่าสุดนี้');
+    });
+
+    document.getElementById('profilePhotoInput').addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        state.profile = normalizeProfile(state.profile, state.currentEmail);
+        state.profile.photo = String(reader.result || '');
+        localStorage.setItem('plchatPublicProfile', JSON.stringify(state.profile));
+        renderProfile();
+        setNotice('เปลี่ยนรูปโปรไฟล์แล้ว เพื่อนและผู้ติดตามจะเห็นรูปนี้');
+      });
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('editRoomBtn').addEventListener('click', () => {
+      document.getElementById('roomSettingsForm').classList.toggle('hidden');
+    });
+
+    document.getElementById('roomSettingsForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const room = state.rooms[state.selectedRoom];
+      room.title = document.getElementById('roomNameInput').value.trim() || room.title;
+      room.scope = document.getElementById('roomScopeInput').value.trim() || room.scope;
+      state.roomSettings[state.selectedRoom] = { title: room.title, scope: room.scope };
+      localStorage.setItem('plchatRoomSettings', JSON.stringify(state.roomSettings));
+      document.getElementById('roomSettingsForm').classList.add('hidden');
+      renderMessages();
+      renderRooms();
+      setNotice('บันทึกชื่อห้องแชทหรือชื่อกลุ่มแล้ว');
+    });
+
+    document.getElementById('assistantForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = document.getElementById('assistantInput');
+      const text = input.value.trim();
+      if (!text) return;
+      state.assistantMessages.push({ role: 'user', text });
+      input.value = '';
+      renderAssistant();
+      const reply = await askAssistant(text);
+      state.assistantMessages.push({ role: 'assistant', text: reply });
+      renderAssistant();
+    });
+
+    document.getElementById('largeFileInput').addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      const status = document.getElementById('fileStatus');
+      const progress = document.getElementById('uploadProgress');
+      if (!file) {
+        status.textContent = 'ยังไม่ได้เลือกไฟล์';
+        progress.style.width = '0%';
+        return;
+      }
+      const sizeMb = file.size / (1024 * 1024);
+      const sizeLabel = sizeMb >= 1024 ? `${(sizeMb / 1024).toFixed(2)} GB` : `${sizeMb.toFixed(2)} MB`;
+      status.textContent = `เลือกไฟล์แล้ว: ${file.name} (${sizeLabel}) · กำลังเตรียมลิงก์ส่งไฟล์ใหญ่`;
+      progress.style.width = '12%';
+      setTimeout(() => { progress.style.width = '45%'; }, 250);
+      setTimeout(() => { progress.style.width = '82%'; }, 650);
+      setTimeout(() => {
+        progress.style.width = '100%';
+        status.textContent = `พร้อมส่ง: ${file.name} (${sizeLabel}) · สร้างลิงก์ปลอดภัยเรียบร้อย`;
+      }, 1050);
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      state.currentEmail = '';
+      document.getElementById('appPage').classList.add('hidden');
+      document.getElementById('authPage').classList.remove('hidden');
+      setMode('login');
+    });
+
+    function showMobileTab(tab) {
+      const rooms = document.getElementById('roomsPane');
+      const dashboard = document.getElementById('dashboardPane');
+      const chat = document.getElementById('chatPane');
+      const feed = document.getElementById('feedPane');
+      dashboard.classList.toggle('mobile-show', tab === 'dashboard');
+      rooms.classList.toggle('mobile-show', tab === 'rooms');
+      chat.classList.toggle('mobile-hide', tab !== 'chat');
+      feed.classList.toggle('mobile-show', tab === 'feed');
+      document.querySelectorAll('.bottom-tabs button').forEach((button) => {
+        button.classList.toggle('active', button.dataset.tab === tab);
+      });
+    }
+
+    document.querySelectorAll('.bottom-tabs button').forEach((button) => {
+      button.addEventListener('click', () => showMobileTab(button.dataset.tab));
+    });
+
+    document.querySelectorAll('[data-tab-jump]').forEach((button) => {
+      button.addEventListener('click', () => showMobileTab(button.dataset.tabJump));
+    });
+
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+
+    applyLanguage();
+    renderMoodChoices();
+    renderAssistant();
+  </script>
+</body>
+</html>
+

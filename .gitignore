@@ -1,0 +1,33 @@
+node_modules/
+.expo/
+.npm-cache/
+.electron-builder-cache/
+dist/
+release/
+release-lan-v1/
+release-lan-v1-zip/
+build/
+coverage/
+*.log
+logs/
+.env
+.env.*
+!.env.example
+!.env.production.example
+!.env.local.example
+pl-chat-data/
+trial-data/
+.backups/
+.smoke-data/
+.benchmark-data/
+.tmp-unread-smoke/
+trial-server/notification-test-data/
+mobile-download/
+
+# Local desktop configuration and recovery artifacts
+electron/desktop-config.json
+.recovery-test/
+*.backup-*
+
+# Generated desktop runtime artifacts are published separately, never in source control.
+trial-server/public/PLCHAT-Runtime-*.zip

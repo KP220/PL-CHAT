@@ -1,0 +1,223 @@
+{
+  "title": "PL CHAT File Transfer Benchmark V2",
+  "status": "passed",
+  "startedAt": "2026-06-27T09:22:55.017Z",
+  "finishedAt": "2026-06-27T09:28:34.307Z",
+  "route": "quick_tunnel",
+  "baseUrl": "https://monitored-anna-estimated-resistant.trycloudflare.com",
+  "user": {
+    "id": "c1cd7d302ff01ceaf3c5f002",
+    "name": "KaveeP2020"
+  },
+  "roomId": "7a10fa2bd14e35763c378dcf",
+  "configuration": {
+    "sizesMb": [
+      1024
+    ],
+    "runs": 1,
+    "strategy": "auto",
+    "downloadMode": "server",
+    "realLargeTransfer": false,
+    "maxDefaultRealTransferMb": 1024,
+    "server": {
+      "ok": true,
+      "service": "",
+      "appPublicUrl": "",
+      "uploadMaxMb": 20480,
+      "directUploadMaxMb": 100,
+      "fileUploadMode": "universal",
+      "filePreviewMode": "safe-only",
+      "enableChunkUpload": true,
+      "enableMultipartUpload": true,
+      "enableResumableUpload": true,
+      "enablePersistentUploadQueue": true,
+      "enableSignedDirectDownload": true,
+      "s3PublicTransferReady": true,
+      "enableDesktopParallelDownload": true,
+      "signedDownloadExpiresMinutes": 15,
+      "chunkSizeMb": 64,
+      "chunkSizeBytes": 67108864,
+      "multipartMinFileSizeMb": 100,
+      "multipartThresholdBytes": 104857600,
+      "multipartDefaultPartSizeMb": 64,
+      "multipartMinPartSizeMb": 16,
+      "multipartMaxPartSizeMb": 128,
+      "maxMultipartUploadMb": 20480,
+      "uploadQueueConcurrency": 3,
+      "uploadRetryLimit": 3,
+      "chunkUploadExpiresHours": 72,
+      "unauthenticatedHealth": {
+        "ok": true,
+        "service": "pl-chat-internal-workspace",
+        "generatedAt": "2026-06-27T09:22:55.611Z"
+      }
+    }
+  },
+  "capabilityChecks": [
+    {
+      "name": "benchmark route classified",
+      "pass": true,
+      "detail": {
+        "route": "quick_tunnel",
+        "baseUrl": "https://monitored-anna-estimated-resistant.trycloudflare.com"
+      }
+    },
+    {
+      "name": "health endpoint reachable",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "service": "",
+        "appPublicUrl": "",
+        "uploadMaxMb": 20480,
+        "directUploadMaxMb": 100,
+        "fileUploadMode": "universal",
+        "filePreviewMode": "safe-only",
+        "enableChunkUpload": true,
+        "enableMultipartUpload": true,
+        "enableResumableUpload": true,
+        "enablePersistentUploadQueue": true,
+        "enableSignedDirectDownload": true,
+        "s3PublicTransferReady": true,
+        "enableDesktopParallelDownload": true,
+        "signedDownloadExpiresMinutes": 15,
+        "chunkSizeMb": 64,
+        "chunkSizeBytes": 67108864,
+        "multipartMinFileSizeMb": 100,
+        "multipartThresholdBytes": 104857600,
+        "multipartDefaultPartSizeMb": 64,
+        "multipartMinPartSizeMb": 16,
+        "multipartMaxPartSizeMb": 128,
+        "maxMultipartUploadMb": 20480,
+        "uploadQueueConcurrency": 3,
+        "uploadRetryLimit": 3,
+        "chunkUploadExpiresHours": 72,
+        "unauthenticatedHealth": {
+          "ok": true,
+          "service": "pl-chat-internal-workspace",
+          "generatedAt": "2026-06-27T09:22:55.611Z"
+        }
+      }
+    },
+    {
+      "name": "runtime origin benchmark target",
+      "pass": true,
+      "detail": {
+        "baseUrl": "https://monitored-anna-estimated-resistant.trycloudflare.com"
+      }
+    },
+    {
+      "name": "MinIO/S3 public transfer capability detected",
+      "pass": true,
+      "detail": {
+        "s3PublicTransferReady": true,
+        "enableMultipartUpload": true,
+        "enableSignedDirectDownload": true,
+        "maxMultipartUploadMb": 20480,
+        "multipartMinFileSizeMb": 100,
+        "bucketIsPrivateExpected": true
+      }
+    },
+    {
+      "name": "size 1024 MB selected strategy",
+      "pass": true,
+      "detail": {
+        "uploadPath": "multipart",
+        "canSendBytes": true
+      }
+    },
+    {
+      "name": "signed MinIO upload URL issued",
+      "pass": true,
+      "detail": {
+        "origin": "https://roll-financial-wallpapers-arranged.trycloudflare.com",
+        "expiresAt": "2026-06-27T09:52:58.835Z",
+        "urlRedacted": true
+      }
+    }
+  ],
+  "averages": {
+    "multipart:1024": {
+      "transport": "multipart",
+      "sizeMb": 1024,
+      "runs": 1,
+      "averageMbPerSecond": 5.7
+    },
+    "server-download:1024": {
+      "transport": "server-download",
+      "sizeMb": 1024,
+      "runs": 1,
+      "averageMbPerSecond": 6.75
+    },
+    "server-range-download:1024": {
+      "transport": "server-range-download",
+      "sizeMb": 1024,
+      "runs": 1,
+      "averageMbPerSecond": 4.65
+    }
+  },
+  "measurements": [
+    {
+      "label": "health-check",
+      "route": "quick_tunnel",
+      "baseUrl": "https://monitored-anna-estimated-resistant.trycloudflare.com",
+      "strategy": "auto",
+      "bytes": 0,
+      "sizeMb": 0,
+      "elapsedMs": 857.51,
+      "throughputMbPerSecond": 0,
+      "clientRssDeltaMb": 15.89,
+      "phase": "preflight"
+    },
+    {
+      "label": "multipart-upload-1024mb-run-1",
+      "route": "quick_tunnel",
+      "baseUrl": "https://monitored-anna-estimated-resistant.trycloudflare.com",
+      "strategy": "auto",
+      "bytes": 1073741824,
+      "sizeMb": 1024,
+      "elapsedMs": 179596.07,
+      "throughputMbPerSecond": 5.7,
+      "clientRssDeltaMb": 21.76,
+      "phase": "transfer",
+      "transport": "multipart",
+      "measuredThroughput": true
+    },
+    {
+      "label": "server-download-1024mb-run-1",
+      "route": "quick_tunnel",
+      "baseUrl": "https://monitored-anna-estimated-resistant.trycloudflare.com",
+      "strategy": "auto",
+      "bytes": 1073741824,
+      "sizeMb": 1024,
+      "elapsedMs": 151713.31,
+      "throughputMbPerSecond": 6.75,
+      "clientRssDeltaMb": -52.46,
+      "phase": "transfer",
+      "transport": "server-download",
+      "measuredThroughput": true
+    },
+    {
+      "label": "range-download-1024mb-run-1",
+      "route": "quick_tunnel",
+      "baseUrl": "https://monitored-anna-estimated-resistant.trycloudflare.com",
+      "strategy": "auto",
+      "bytes": 16777216,
+      "sizeMb": 1024,
+      "elapsedMs": 3438.69,
+      "throughputMbPerSecond": 4.65,
+      "clientRssDeltaMb": -30.91,
+      "phase": "transfer",
+      "transport": "server-range-download",
+      "measuredThroughput": true,
+      "rangeBytes": 16777216
+    }
+  ],
+  "cleanup": {
+    "uploadedBenchmarkFiles": 1,
+    "multipartSessionsCancelled": 0,
+    "localTemporaryFilesRemoved": true
+  },
+  "warning": "Transfers larger than 1024 MB are capability checks only unless PL_CHAT_BENCHMARK_REAL_LARGE=true.",
+  "error": null
+}

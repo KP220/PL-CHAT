@@ -1,0 +1,254 @@
+{
+  "title": "PL CHAT File Transfer Benchmark V2",
+  "status": "failed",
+  "startedAt": "2026-06-27T09:04:56.316Z",
+  "finishedAt": "2026-06-27T09:04:57.409Z",
+  "route": "localhost",
+  "baseUrl": "http://localhost:8788",
+  "user": {
+    "id": "c1cd7d302ff01ceaf3c5f002",
+    "name": "KaveeP2020"
+  },
+  "roomId": "7a10fa2bd14e35763c378dcf",
+  "configuration": {
+    "sizesMb": [
+      100
+    ],
+    "runs": 1,
+    "strategy": "auto",
+    "downloadMode": "server",
+    "realLargeTransfer": false,
+    "maxDefaultRealTransferMb": 100,
+    "server": {
+      "ok": true,
+      "service": "pl-chat-internal-workspace",
+      "urls": [
+        "http://172.26.240.1:8788",
+        "http://192.168.1.126:8788",
+        "http://localhost:8788"
+      ],
+      "smtpConfigured": true,
+      "appPublicUrl": "https://classification-simon-reel-television.trycloudflare.com",
+      "emailVerificationRequired": true,
+      "uploadMaxMb": 20480,
+      "directUploadMaxMb": 100,
+      "fileUploadMode": "universal",
+      "filePreviewMode": "safe-only",
+      "enableChunkUpload": true,
+      "enableMultipartUpload": true,
+      "enableResumableUpload": true,
+      "enablePersistentUploadQueue": true,
+      "enableSignedDirectDownload": true,
+      "s3PublicTransferReady": true,
+      "enableDesktopParallelDownload": true,
+      "signedDownloadExpiresMinutes": 15,
+      "chunkSizeMb": 64,
+      "chunkSizeBytes": 67108864,
+      "multipartMinFileSizeMb": 100,
+      "multipartThresholdBytes": 104857600,
+      "multipartDefaultPartSizeMb": 64,
+      "multipartMinPartSizeMb": 16,
+      "multipartMaxPartSizeMb": 128,
+      "maxMultipartUploadMb": 20480,
+      "uploadQueueConcurrency": 3,
+      "uploadRetryLimit": 3,
+      "chunkUploadExpiresHours": 72,
+      "repository": {
+        "mode": "json",
+        "enabled": false,
+        "connected": false,
+        "source": "json",
+        "reason": "db_reads_disabled"
+      },
+      "source": "json",
+      "files": [
+        {
+          "id": "1009ff03684f0e80099d489f",
+          "organizationId": "default-org",
+          "conversationId": "5121a5e88bf909c6c4702d37",
+          "roomId": "5121a5e88bf909c6c4702d37",
+          "postId": null,
+          "messageId": "f0bf6eed43d7b6684c0290ed",
+          "name": "kitty.png",
+          "originalName": "kitty.png",
+          "type": "image/png",
+          "mimeType": "image/png",
+          "extension": ".png",
+          "category": "images",
+          "size": 2077591,
+          "byteSize": 2077591,
+          "uploaderId": "c1cd7d302ff01ceaf3c5f002",
+          "uploaderName": "KaveeP2020",
+          "roomName": "ห้อง Buffet",
+          "sourceType": "chat",
+          "sourceLabel": "Shared in chat: ห้อง Buffet",
+          "canPreview": true,
+          "thumbnailUrl": "/api/files/1009ff03684f0e80099d489f/thumbnail",
+          "previewUrl": "/api/files/1009ff03684f0e80099d489f/preview",
+          "downloadUrl": "/api/files/1009ff03684f0e80099d489f/download",
+          "shareUrl": "/api/files/1009ff03684f0e80099d489f/share",
+          "createdAt": "2026-06-27T08:11:52.786Z",
+          "deletedAt": null
+        }
+      ],
+      "total": 776,
+      "limit": 1,
+      "offset": 0,
+      "hasMore": true,
+      "mode": "universal",
+      "previewMode": "safe-only",
+      "unauthenticatedHealth": {
+        "ok": true,
+        "service": "pl-chat-internal-workspace",
+        "generatedAt": "2026-06-27T09:04:56.352Z"
+      }
+    }
+  },
+  "capabilityChecks": [
+    {
+      "name": "benchmark route classified",
+      "pass": true,
+      "detail": {
+        "route": "localhost",
+        "baseUrl": "http://localhost:8788"
+      }
+    },
+    {
+      "name": "health endpoint reachable",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "service": "pl-chat-internal-workspace",
+        "urls": [
+          "http://172.26.240.1:8788",
+          "http://192.168.1.126:8788",
+          "http://localhost:8788"
+        ],
+        "smtpConfigured": true,
+        "appPublicUrl": "https://classification-simon-reel-television.trycloudflare.com",
+        "emailVerificationRequired": true,
+        "uploadMaxMb": 20480,
+        "directUploadMaxMb": 100,
+        "fileUploadMode": "universal",
+        "filePreviewMode": "safe-only",
+        "enableChunkUpload": true,
+        "enableMultipartUpload": true,
+        "enableResumableUpload": true,
+        "enablePersistentUploadQueue": true,
+        "enableSignedDirectDownload": true,
+        "s3PublicTransferReady": true,
+        "enableDesktopParallelDownload": true,
+        "signedDownloadExpiresMinutes": 15,
+        "chunkSizeMb": 64,
+        "chunkSizeBytes": 67108864,
+        "multipartMinFileSizeMb": 100,
+        "multipartThresholdBytes": 104857600,
+        "multipartDefaultPartSizeMb": 64,
+        "multipartMinPartSizeMb": 16,
+        "multipartMaxPartSizeMb": 128,
+        "maxMultipartUploadMb": 20480,
+        "uploadQueueConcurrency": 3,
+        "uploadRetryLimit": 3,
+        "chunkUploadExpiresHours": 72,
+        "repository": {
+          "mode": "json",
+          "enabled": false,
+          "connected": false,
+          "source": "json",
+          "reason": "db_reads_disabled"
+        },
+        "source": "json",
+        "files": [
+          {
+            "id": "1009ff03684f0e80099d489f",
+            "organizationId": "default-org",
+            "conversationId": "5121a5e88bf909c6c4702d37",
+            "roomId": "5121a5e88bf909c6c4702d37",
+            "postId": null,
+            "messageId": "f0bf6eed43d7b6684c0290ed",
+            "name": "kitty.png",
+            "originalName": "kitty.png",
+            "type": "image/png",
+            "mimeType": "image/png",
+            "extension": ".png",
+            "category": "images",
+            "size": 2077591,
+            "byteSize": 2077591,
+            "uploaderId": "c1cd7d302ff01ceaf3c5f002",
+            "uploaderName": "KaveeP2020",
+            "roomName": "ห้อง Buffet",
+            "sourceType": "chat",
+            "sourceLabel": "Shared in chat: ห้อง Buffet",
+            "canPreview": true,
+            "thumbnailUrl": "/api/files/1009ff03684f0e80099d489f/thumbnail",
+            "previewUrl": "/api/files/1009ff03684f0e80099d489f/preview",
+            "downloadUrl": "/api/files/1009ff03684f0e80099d489f/download",
+            "shareUrl": "/api/files/1009ff03684f0e80099d489f/share",
+            "createdAt": "2026-06-27T08:11:52.786Z",
+            "deletedAt": null
+          }
+        ],
+        "total": 776,
+        "limit": 1,
+        "offset": 0,
+        "hasMore": true,
+        "mode": "universal",
+        "previewMode": "safe-only",
+        "unauthenticatedHealth": {
+          "ok": true,
+          "service": "pl-chat-internal-workspace",
+          "generatedAt": "2026-06-27T09:04:56.352Z"
+        }
+      }
+    },
+    {
+      "name": "runtime origin benchmark target",
+      "pass": true,
+      "detail": {
+        "baseUrl": "http://localhost:8788"
+      }
+    },
+    {
+      "name": "MinIO/S3 public transfer capability detected",
+      "pass": true,
+      "detail": {
+        "s3PublicTransferReady": true,
+        "enableMultipartUpload": true,
+        "enableSignedDirectDownload": true,
+        "maxMultipartUploadMb": 20480,
+        "multipartMinFileSizeMb": 100,
+        "bucketIsPrivateExpected": true
+      }
+    },
+    {
+      "name": "size 100 MB selected strategy",
+      "pass": true,
+      "detail": {
+        "uploadPath": "multipart",
+        "canSendBytes": true
+      }
+    }
+  ],
+  "averages": {},
+  "measurements": [
+    {
+      "label": "health-check",
+      "route": "localhost",
+      "baseUrl": "http://localhost:8788",
+      "strategy": "auto",
+      "bytes": 0,
+      "sizeMb": 0,
+      "elapsedMs": 38.91,
+      "throughputMbPerSecond": 0,
+      "clientRssDeltaMb": 11.52,
+      "phase": "preflight"
+    }
+  ],
+  "cleanup": {
+    "uploadedBenchmarkFiles": 0,
+    "multipartSessionsCancelled": 1,
+    "localTemporaryFilesRemoved": true
+  },
+  "warning": "Transfers larger than 100 MB are capability checks only unless PL_CHAT_BENCHMARK_REAL_LARGE=true.",
+  "error": "fetch failed"
+}

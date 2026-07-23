@@ -1,0 +1,111 @@
+﻿{
+    "name":  "pl-chat",
+    "version":  "1.0.11",
+    "description":  "PL CHAT internal organization realtime chat workspace.",
+    "author":  "PL CHAT",
+    "private":  true,
+    "main":  "node_modules/expo/AppEntry.js",
+    "engines":  {
+                    "node":  "\u003e=22.13.0"
+                },
+    "scripts":  {
+                    "start":  "expo start",
+                    "android":  "expo start --android",
+                    "ios":  "expo start --ios",
+                    "web":  "expo start --web",
+                    "web:export":  "expo export --platform web --output-dir dist/web",
+                    "desktop:dev":  "concurrently -k \"npm run plchat:workspace\" \"wait-on http://localhost:8788 \u0026\u0026 cross-env PL_CHAT_DESKTOP_URL=http://localhost:8788 electron electron/main.cjs\"",
+                    "desktop:build":  "cross-env ELECTRON_BUILDER_CACHE=.electron-builder-cache electron-builder",
+                    "desktop:package":  "cross-env ELECTRON_BUILDER_CACHE=.electron-builder-cache electron-builder --dir",
+                    "desktop:win":  "cross-env ELECTRON_BUILDER_CACHE=.electron-builder-cache electron-builder --win",
+                    "desktop:update-feed":  "node scripts/create-desktop-update-feed.mjs",
+                    "desktop:release-check":  "node scripts/plchat-1.0.9-release-check.mjs",
+                    "desktop:phase-p":  "node scripts/phase-p-production-updater-acceptance.mjs",
+                    "desktop:build:windows":  "npm run desktop:win",
+                    "desktop:build:mac":  "cross-env ELECTRON_BUILDER_CACHE=.electron-builder-cache electron-builder --mac",
+                    "assistant:server":  "node server/openai-assistant.example.mjs",
+                    "plchat:workspace":  "node trial-server/server.mjs",
+                    "plchat:production":  "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-start-pl-chat-production.ps1",
+                    "plchat:tunnel":  "cloudflared tunnel --url http://localhost:8788",
+                    "plchat:backup":  "node scripts/backup-pl-chat-data.mjs",
+                    "plchat:import:dry-run":  "npm --prefix apps/api run data:import:dry-run",
+                    "plchat:import:apply":  "npm --prefix apps/api run data:import:apply",
+                    "plchat:phaseb:test-db":  "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-phase-b-test-db.ps1",
+                    "plchat:phase-t":  "node scripts/phase-t-kaveep-assistant-acceptance.mjs",
+                    "plchat:benchmark:file-transfer":  "node scripts/benchmark-file-transfer-baseline.mjs",
+                    "plchat:benchmark:file-transfer:v2":  "node scripts/benchmark-file-transfer-v2.mjs",
+                    "build:android:apk":  "eas build --profile preview --platform android",
+                    "build:android:aab":  "eas build --profile production --platform android",
+                    "build:ios":  "eas build --profile production --platform ios",
+                    "build:mobile:all":  "eas build --profile production --platform all",
+                    "typecheck":  "tsc --noEmit"
+                },
+    "dependencies":  {
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^16.4.7",
+                         "expo":  "^56.0.0",
+                         "express":  "^4.21.2",
+                         "lucide-react-native":  "^0.468.0",
+                         "openai":  "^6.10.0",
+                         "react":  "19.2.3",
+                         "react-dom":  "19.2.3",
+                         "react-native":  "0.85.0",
+                         "react-native-safe-area-context":  "^4.12.0",
+                         "react-native-svg":  "^15.8.0",
+                         "react-native-web":  "^0.21.2"
+                     },
+    "devDependencies":  {
+                            "@types/react":  "^19.0.0",
+                            "concurrently":  "^9.1.2",
+                            "cross-env":  "^7.0.3",
+                            "eas-cli":  "^15.0.0",
+                            "electron":  "^33.4.11",
+                            "electron-builder":  "^25.1.8",
+                            "typescript":  "^5.6.3",
+                            "wait-on":  "^8.0.1"
+                        },
+    "build":  {
+                  "appId":  "com.plchat.app",
+                  "productName":  "PL CHAT",
+                  "copyright":  "Copyright 2026 PL CHAT",
+                  "npmRebuild":  false,
+                  "directories":  {
+                                      "output":  "release"
+                                  },
+                  "files":  [
+                                "electron/**/*",
+                                "assets/**/*",
+                                "package.json"
+                            ],
+                  "extraMetadata":  {
+                                        "main":  "electron/main.cjs"
+                                    },
+                  "win":  {
+                              "executableName":  "PL CHAT",
+                              "artifactName":  "${productName} Setup ${version} Auto Update Stable.${ext}",
+                              "target":  [
+                                             "nsis"
+                                         ],
+                              "icon":  "build/icon.ico"
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "perMachine":  false,
+                               "allowElevation":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "shortcutName":  "PL CHAT",
+                               "include":  "build/installer/lan-v1.nsh"
+                           },
+                  "mac":  {
+                              "target":  [
+                                             "dmg",
+                                             "zip"
+                                         ],
+                              "icon":  "assets/icon.png",
+                              "category":  "public.app-category.business"
+                          },
+                  "icon":  "build/icon.png"
+              }
+}

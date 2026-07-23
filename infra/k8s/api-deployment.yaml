@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pl-chat-api
+  labels:
+    app: pl-chat-api
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8787"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pl-chat-api
+  template:
+    metadata:
+      labels:
+        app: pl-chat-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/OWNER/pl-chat-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8787
+          envFrom:
+            - secretRef:
+                name: pl-chat-api-secrets
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8787
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8787
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pl-chat-api
+spec:
+  selector:
+    app: pl-chat-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8787

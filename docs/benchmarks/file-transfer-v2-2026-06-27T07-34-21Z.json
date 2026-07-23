@@ -1,0 +1,146 @@
+{
+  "title": "PL CHAT File Transfer Benchmark V2",
+  "status": "passed",
+  "startedAt": "2026-06-27T07:34:21.220Z",
+  "finishedAt": "2026-06-27T07:34:28.596Z",
+  "route": "localhost",
+  "baseUrl": "http://localhost:8788",
+  "user": {
+    "id": "c1cd7d302ff01ceaf3c5f002",
+    "name": "KaveeP2020"
+  },
+  "roomId": "7a10fa2bd14e35763c378dcf",
+  "configuration": {
+    "sizesMb": [
+      1
+    ],
+    "runs": 1,
+    "strategy": "auto",
+    "downloadMode": "server",
+    "realLargeTransfer": false,
+    "maxDefaultRealTransferMb": 1,
+    "server": {
+      "ok": true,
+      "service": "pl-chat-internal-workspace",
+      "generatedAt": "2026-06-27T07:34:21.313Z"
+    }
+  },
+  "capabilityChecks": [
+    {
+      "name": "benchmark route classified",
+      "pass": true,
+      "detail": {
+        "route": "localhost",
+        "baseUrl": "http://localhost:8788"
+      }
+    },
+    {
+      "name": "health endpoint reachable",
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "service": "pl-chat-internal-workspace",
+        "generatedAt": "2026-06-27T07:34:21.313Z"
+      }
+    },
+    {
+      "name": "runtime origin benchmark target",
+      "pass": true,
+      "detail": {
+        "baseUrl": "http://localhost:8788"
+      }
+    },
+    {
+      "name": "size 1 MB selected strategy",
+      "pass": true,
+      "detail": {
+        "uploadPath": "direct",
+        "canSendBytes": true
+      }
+    }
+  ],
+  "averages": {
+    "direct:1": {
+      "transport": "direct",
+      "sizeMb": 1,
+      "runs": 1,
+      "averageMbPerSecond": 0.59
+    },
+    "server-download:1": {
+      "transport": "server-download",
+      "sizeMb": 1,
+      "runs": 1,
+      "averageMbPerSecond": 0.51
+    },
+    "server-range-download:1": {
+      "transport": "server-range-download",
+      "sizeMb": 1,
+      "runs": 1,
+      "averageMbPerSecond": 0.6
+    }
+  },
+  "measurements": [
+    {
+      "label": "health-check",
+      "route": "localhost",
+      "baseUrl": "http://localhost:8788",
+      "strategy": "auto",
+      "bytes": 0,
+      "sizeMb": 0,
+      "elapsedMs": 96.84,
+      "throughputMbPerSecond": 0,
+      "clientRssDeltaMb": 12.18,
+      "phase": "preflight"
+    },
+    {
+      "label": "direct-upload-1mb-run-1",
+      "route": "localhost",
+      "baseUrl": "http://localhost:8788",
+      "strategy": "auto",
+      "bytes": 1048576,
+      "sizeMb": 1,
+      "elapsedMs": 1690.93,
+      "throughputMbPerSecond": 0.59,
+      "clientRssDeltaMb": 4.04,
+      "phase": "transfer",
+      "transport": "direct",
+      "measuredThroughput": true
+    },
+    {
+      "label": "server-download-1mb-run-1",
+      "route": "localhost",
+      "baseUrl": "http://localhost:8788",
+      "strategy": "auto",
+      "bytes": 1048576,
+      "sizeMb": 1,
+      "elapsedMs": 1956.85,
+      "throughputMbPerSecond": 0.51,
+      "clientRssDeltaMb": 3.29,
+      "phase": "transfer",
+      "transport": "server-download",
+      "measuredThroughput": true
+    },
+    {
+      "label": "range-download-1mb-run-1",
+      "route": "localhost",
+      "baseUrl": "http://localhost:8788",
+      "strategy": "auto",
+      "bytes": 1048576,
+      "sizeMb": 1,
+      "elapsedMs": 1669.78,
+      "throughputMbPerSecond": 0.6,
+      "clientRssDeltaMb": 3.2,
+      "phase": "transfer",
+      "transport": "server-range-download",
+      "measuredThroughput": true,
+      "rangeBytes": 1048576
+    }
+  ],
+  "cleanup": {
+    "uploadedBenchmarkFiles": 1,
+    "multipartSessionsCancelled": 0,
+    "localTemporaryFilesRemoved": true
+  },
+  "warning": "Transfers larger than 1 MB are capability checks only unless PL_CHAT_BENCHMARK_REAL_LARGE=true.",
+  "error": null
+}

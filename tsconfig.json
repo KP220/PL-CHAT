@@ -1,0 +1,19 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "release",
+    "build",
+    "coverage",
+    ".expo",
+    ".smoke-data",
+    "pl-chat-data",
+    "trial-data"
+  ]
+}

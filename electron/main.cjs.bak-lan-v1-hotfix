@@ -1,0 +1,825 @@
+const { app, BrowserWindow, Menu, Notification, Tray, ipcMain, nativeImage, shell } = require('electron');
+const fs = require('fs');
+const path = require('path');
+const { pathToFileURL } = require('url');
+
+const APP_NAME = 'PL CHAT';
+const DEFAULT_APP_URL = 'http://localhost:8788';
+const UPDATE_MODE = 'manual-lan-installer';
+const DEFAULT_WINDOW_STATE = { width: 1280, height: 840, maximized: false };
+const DEFAULT_PREFERENCES = {
+  minimizeToTray: true,
+  notificationsEnabled: true,
+  doNotDisturb: false,
+  startWithWindows: true
+};
+const DESKTOP_UPDATER_ONLY_ERROR = 'Desktop updater is available only in PL CHAT Desktop App.';
+const DEFAULT_UPDATE_STATUS = {
+  state: 'idle',
+  available: false,
+  version: null,
+  downloaded: false,
+  lastCheckedAt: null,
+  message: 'LAN-only v1 uses manual installer updates from the administrator.'
+};
+
+let mainWindow;
+let tray;
+let isQuitting = false;
+let saveWindowTimer;
+
+function safeReadJson(filePath, fallback) {
+  try {
+    return { ...fallback, ...JSON.parse(fs.readFileSync(filePath, 'utf8')) };
+  } catch {
+    return { ...fallback };
+  }
+}
+
+function safeWriteJson(filePath, value) {
+  const directory = path.dirname(filePath);
+  const temporaryPath = `${filePath}.tmp`;
+  fs.mkdirSync(directory, { recursive: true });
+  fs.writeFileSync(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  try {
+    fs.renameSync(temporaryPath, filePath);
+  } catch {
+    fs.copyFileSync(temporaryPath, filePath);
+    fs.unlinkSync(temporaryPath);
+  }
+}
+
+function userDataPath(fileName) {
+  return path.join(app.getPath('userData'), fileName);
+}
+
+function bundledConfigPath() {
+  return path.join(__dirname, 'desktop-config.json');
+}
+
+function desktopConfigPath() {
+  return userDataPath('desktop-server.json');
+}
+
+function validAppUrl(value) {
+  try {
+    const url = new URL(String(value || '').trim());
+    return ['http:', 'https:'].includes(url.protocol) ? url.toString().replace(/\/$/, '') : '';
+  } catch {
+    return '';
+  }
+}
+
+function readDesktopConfig() {
+  return safeReadJson(desktopConfigPath(), {});
+}
+
+function saveDesktopConfig(patch) {
+  const next = { ...readDesktopConfig(), ...patch };
+  safeWriteJson(desktopConfigPath(), next);
+  return next;
+}
+
+function getAppUrl() {
+  const bundled = safeReadJson(bundledConfigPath(), {});
+  const saved = readDesktopConfig();
+  return validAppUrl(process.env.PL_CHAT_DESKTOP_URL)
+    || validAppUrl(process.env.APP_PUBLIC_URL)
+    || validAppUrl(saved.appUrl)
+    || validAppUrl(bundled.appUrl)
+    || DEFAULT_APP_URL;
+}
+
+function getAllowedOrigin() {
+  return new URL(getAppUrl()).origin;
+}
+
+function isAllowedAppNavigation(target) {
+  try {
+    const url = new URL(target);
+    const offlineUrl = pathToFileURL(path.join(__dirname, 'offline.html')).toString();
+    return url.origin === getAllowedOrigin() || url.toString().startsWith(offlineUrl);
+  } catch {
+    return false;
+  }
+}
+
+function isSafeExternalUrl(target) {
+  try {
+    return ['https:', 'mailto:'].includes(new URL(target).protocol);
+  } catch {
+    return false;
+  }
+}
+
+function safeInternalTarget(target) {
+  try {
+    const url = new URL(String(target || '/notifications'), getAppUrl());
+    if (url.origin !== getAllowedOrigin()) return '/notifications';
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return '/notifications';
+  }
+}
+
+function windowStatePath() {
+  return userDataPath('window-state.json');
+}
+
+function preferencesPath() {
+  return userDataPath('desktop-preferences.json');
+}
+
+function updateStatusPath() {
+  return userDataPath('desktop-update-status.json');
+}
+
+function updateHistoryPath() {
+  return userDataPath('desktop-update-history.json');
+}
+
+function readPreferences() {
+  return safeReadJson(preferencesPath(), DEFAULT_PREFERENCES);
+}
+
+function savePreferences(patch) {
+  const next = { ...readPreferences(), ...patch };
+  safeWriteJson(preferencesPath(), next);
+  return next;
+}
+
+function assertDesktopUpdaterRuntime(event) {
+  if (!event?.senderFrame || event.senderFrame.url === 'about:blank') {
+    throw new Error(DESKTOP_UPDATER_ONLY_ERROR);
+  }
+  if (event.sender.id !== mainWindow?.webContents.id) {
+    throw new Error(DESKTOP_UPDATER_ONLY_ERROR);
+  }
+  if (!isAllowedAppNavigation(event.senderFrame.url)) {
+    throw new Error(DESKTOP_UPDATER_ONLY_ERROR);
+  }
+}
+
+function readUpdateStatus() {
+  return safeReadJson(updateStatusPath(), DEFAULT_UPDATE_STATUS);
+}
+
+function saveUpdateStatus(patch) {
+  const next = { ...readUpdateStatus(), ...patch };
+  safeWriteJson(updateStatusPath(), next);
+  return next;
+}
+
+function appendUpdateHistory(action, detail = {}) {
+  const data = safeReadJson(updateHistoryPath(), { items: [] });
+  const items = Array.isArray(data.items) ? data.items : [];
+  items.unshift({ action, detail, createdAt: new Date().toISOString() });
+  safeWriteJson(updateHistoryPath(), { items: items.slice(0, 80) });
+  return items[0];
+}
+
+function syncStartWithWindows(enabled) {
+  if (process.platform !== 'win32' || !app.isPackaged) return;
+  app.setLoginItemSettings({
+    openAtLogin: Boolean(enabled),
+    openAsHidden: false,
+    path: process.execPath
+  });
+}
+
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow();
+    return;
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function openInternalTarget(target) {
+  showMainWindow();
+  const safeTarget = safeInternalTarget(target);
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.webContents.isLoading()) {
+    mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow?.webContents.send('plchat:native-notification-click', safeTarget);
+    });
+    return;
+  }
+  mainWindow.webContents.send('plchat:native-notification-click', safeTarget);
+}
+
+function showNativeNotification(payload = {}) {
+  const preferences = readPreferences();
+  if (!Notification.isSupported() || !preferences.notificationsEnabled || preferences.doNotDisturb) return false;
+  const title = String(payload.title || APP_NAME).trim().slice(0, 120) || APP_NAME;
+  const body = String(payload.body || 'คุณมีการแจ้งเตือนใหม่').trim().slice(0, 500);
+  const notification = new Notification({
+    title,
+    body,
+    icon: path.join(__dirname, '..', 'assets', 'icon.png'),
+    silent: Boolean(payload.silent),
+    urgency: payload.urgency === 'critical' ? 'critical' : 'normal'
+  });
+  notification.on('click', () => openInternalTarget(payload.targetUrl));
+  notification.show();
+  return true;
+}
+
+function buildTrayMenu() {
+  const preferences = readPreferences();
+  return Menu.buildFromTemplate([
+    { label: 'Open PL CHAT', click: showMainWindow },
+    { type: 'separator' },
+    {
+      label: 'Notifications',
+      type: 'checkbox',
+      checked: preferences.notificationsEnabled,
+      click: (item) => {
+        savePreferences({ notificationsEnabled: item.checked });
+        mainWindow?.webContents.send('plchat:desktop-preferences', readPreferences());
+      }
+    },
+    {
+      label: 'Do Not Disturb',
+      type: 'checkbox',
+      checked: preferences.doNotDisturb,
+      click: (item) => {
+        savePreferences({ doNotDisturb: item.checked });
+        mainWindow?.webContents.send('plchat:desktop-preferences', readPreferences());
+      }
+    },
+    {
+      label: 'Test Notification',
+      click: () => showNativeNotification({
+        title: 'PL CHAT',
+        body: 'การแจ้งเตือนบนคอมพิวเตอร์พร้อมใช้งานแล้ว',
+        targetUrl: '/notifications'
+      })
+    },
+    {
+      label: 'Keep PL CHAT in Tray on Close',
+      type: 'checkbox',
+      checked: preferences.minimizeToTray,
+      click: (item) => {
+        savePreferences({ minimizeToTray: item.checked });
+        refreshTrayMenu();
+      }
+    },
+    {
+      label: 'Start with Windows',
+      type: 'checkbox',
+      checked: preferences.startWithWindows,
+      click: (item) => {
+        savePreferences({ startWithWindows: item.checked });
+        syncStartWithWindows(item.checked);
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        isQuitting = true;
+        app.quit();
+      }
+    }
+  ]);
+}
+
+function refreshTrayMenu() {
+  tray?.setContextMenu(buildTrayMenu());
+}
+
+function createTray() {
+  if (tray) return;
+  const iconPath = process.platform === 'win32'
+    ? path.join(__dirname, '..', 'assets', 'icon.ico')
+    : path.join(__dirname, '..', 'assets', 'icon.png');
+  const icon = nativeImage.createFromPath(iconPath);
+  tray = new Tray(icon);
+  tray.setToolTip(APP_NAME);
+  refreshTrayMenu();
+  tray.on('click', showMainWindow);
+  tray.on('double-click', showMainWindow);
+}
+
+function saveCurrentWindowState() {
+  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized()) return;
+  const bounds = mainWindow.isMaximized() ? mainWindow.getNormalBounds() : mainWindow.getBounds();
+  safeWriteJson(windowStatePath(), { ...bounds, maximized: mainWindow.isMaximized() });
+}
+
+function scheduleWindowStateSave() {
+  clearTimeout(saveWindowTimer);
+  saveWindowTimer = setTimeout(saveCurrentWindowState, 250);
+}
+
+function showOfflinePage() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.loadFile(path.join(__dirname, 'offline.html'), { query: { appUrl: getAppUrl() } });
+}
+
+function loadWorkspace() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.loadURL(getAppUrl()).catch(showOfflinePage);
+}
+
+
+
+const desktopDownloadJobs = new Map();
+const desktopDownloadControllers = new Map();
+
+function desktopDownloadsStatePath() {
+  return userDataPath('desktop-downloads.json');
+}
+
+function readDesktopDownloadState() {
+  const data = safeReadJson(desktopDownloadsStatePath(), { jobs: [] });
+  return Array.isArray(data.jobs) ? data : { jobs: [] };
+}
+
+function saveDesktopDownloadState(patchJob) {
+  const state = readDesktopDownloadState();
+  const index = state.jobs.findIndex((job) => job.id === patchJob.id);
+  if (index >= 0) state.jobs[index] = { ...state.jobs[index], ...patchJob };
+  else state.jobs.unshift(patchJob);
+  state.jobs = state.jobs.slice(0, 80);
+  safeWriteJson(desktopDownloadsStatePath(), state);
+  return patchJob;
+}
+
+function safeDownloadName(value) {
+  return String(value || 'download.bin').replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').slice(0, 180) || 'download.bin';
+}
+
+function uniqueDownloadPath(fileName) {
+  const downloadsDir = path.join(app.getPath('downloads'), 'PL CHAT Downloads');
+  fs.mkdirSync(downloadsDir, { recursive: true });
+  const parsed = path.parse(safeDownloadName(fileName));
+  let candidate = path.join(downloadsDir, parsed.name + parsed.ext);
+  let counter = 1;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(downloadsDir, parsed.name + ' (' + counter + ')' + parsed.ext);
+    counter += 1;
+  }
+  return candidate;
+}
+
+function desktopPartDir(jobId) {
+  const dir = path.join(app.getPath('userData'), 'download-parts', jobId);
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function publicDownloadJob(job) {
+  return {
+    id: job.id,
+    fileName: job.fileName,
+    destination: job.destination,
+    status: job.status,
+    totalBytes: job.totalBytes,
+    downloadedBytes: job.downloadedBytes || 0,
+    progress: job.totalBytes ? Math.round(((job.downloadedBytes || 0) / job.totalBytes) * 1000) / 10 : 0,
+    parallel: Boolean(job.parallel),
+    concurrency: Number(job.concurrency || 1),
+    route: job.route || 'standard',
+    parts: job.parts?.map((part) => ({ index: part.index, start: part.start, end: part.end, done: Boolean(part.done), bytes: part.bytes || 0 })) || [],
+    verified: Boolean(job.verified),
+    error: job.error || null,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+    completedAt: job.completedAt || null
+  };
+}
+
+function emitDesktopDownload(job) {
+  mainWindow?.webContents.send('plchat:desktop-download-updated', publicDownloadJob(job));
+}
+
+async function fetchHeaders(url) {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (!response.ok) return {};
+    return {
+      contentLength: Number(response.headers.get('content-length') || 0),
+      acceptRanges: /bytes/i.test(response.headers.get('accept-ranges') || ''),
+      etag: response.headers.get('etag') || ''
+    };
+  } catch {
+    return {};
+  }
+}
+
+function makeDesktopParts(totalBytes, count) {
+  const parts = [];
+  const partSize = Math.ceil(totalBytes / count);
+  for (let index = 0; index < count; index += 1) {
+    const start = index * partSize;
+    const end = Math.min(totalBytes - 1, start + partSize - 1);
+    if (start <= end) parts.push({ index, start, end, done: false, bytes: 0 });
+  }
+  return parts;
+}
+
+function isQuickTunnelDownloadUrl(value) {
+  try {
+    return /\.trycloudflare\.com$/i.test(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function desktopDownloadConnectionPlan(url, totalBytes) {
+  const quickTunnel = isQuickTunnelDownloadUrl(url);
+  if (quickTunnel) {
+    return {
+      concurrency: totalBytes >= 1024 * 1024 * 1024 ? 3 : 2,
+      fallbackConcurrency: [1],
+      route: 'quick_tunnel'
+    };
+  }
+  return {
+    concurrency: totalBytes >= 1024 * 1024 * 1024 ? 6 : 4,
+    fallbackConcurrency: [2, 1],
+    route: 'standard'
+  };
+}
+
+async function streamResponseToFile(response, filePath) {
+  const { pipeline } = require('stream/promises');
+  const { Readable } = require('stream');
+  if (!response.body) throw new Error('download_response_empty');
+  await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(filePath));
+}
+
+async function writePartToFinal(partPath, writer, hash) {
+  for await (const chunk of fs.createReadStream(partPath)) {
+    hash.update(chunk);
+    if (!writer.write(chunk)) {
+      await new Promise((resolve) => writer.once('drain', resolve));
+    }
+  }
+}
+
+async function downloadDesktopPart(job, part, controller) {
+  if (part.done) return;
+  const response = await fetch(job.url, {
+    headers: job.parallel ? { Range: `bytes=${part.start}-${part.end}` } : {},
+    signal: controller.signal
+  });
+  if (!response.ok || (job.parallel && response.status !== 206)) {
+    throw new Error(`download_part_failed:${response.status}`);
+  }
+  const partPath = path.join(desktopPartDir(job.id), `part-${part.index}`);
+  await streamResponseToFile(response, partPath);
+  const stat = fs.statSync(partPath);
+  const expected = part.end - part.start + 1;
+  if (job.parallel && stat.size !== expected) throw new Error(`download_part_size_mismatch:${part.index}`);
+  part.done = true;
+  part.bytes = stat.size;
+  job.downloadedBytes = job.parts.reduce((total, item) => total + (item.done ? item.bytes || 0 : 0), 0);
+  job.updatedAt = new Date().toISOString();
+  saveDesktopDownloadState(job);
+  emitDesktopDownload(job);
+}
+
+async function combineDesktopParts(job) {
+  const { createHash } = require('crypto');
+  const hash = createHash('sha256');
+  const writer = fs.createWriteStream(job.destination, { flags: 'w' });
+  try {
+    for (const part of job.parts) {
+      const partPath = path.join(desktopPartDir(job.id), `part-${part.index}`);
+      await writePartToFinal(partPath, writer, hash);
+    }
+    writer.end();
+    await new Promise((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
+  } catch (error) {
+    writer.destroy();
+    throw error;
+  }
+  const finalSize = fs.statSync(job.destination).size;
+  if (job.totalBytes && finalSize !== job.totalBytes) throw new Error('download_size_verification_failed');
+  job.sha256 = hash.digest('hex');
+  if (job.expectedSha256 && job.sha256 !== job.expectedSha256) throw new Error('download_hash_verification_failed');
+  job.verified = true;
+}
+
+function resetDesktopDownloadParts(job, concurrency) {
+  fs.rmSync(desktopPartDir(job.id), { recursive: true, force: true });
+  const selected = Math.max(1, Number(concurrency || 1));
+  job.parallel = selected > 1;
+  job.concurrency = selected;
+  job.downloadedBytes = 0;
+  job.parts = job.parallel
+    ? makeDesktopParts(job.totalBytes, selected)
+    : [{ index: 0, start: 0, end: Math.max(0, job.totalBytes - 1), done: false, bytes: 0 }];
+}
+
+async function runDesktopDownload(jobId) {
+  const job = desktopDownloadJobs.get(jobId);
+  if (!job || job.status === 'completed') return publicDownloadJob(job);
+  const controller = new AbortController();
+  desktopDownloadControllers.set(jobId, controller);
+  try {
+    job.status = 'downloading';
+    job.updatedAt = new Date().toISOString();
+    saveDesktopDownloadState(job);
+    emitDesktopDownload(job);
+    if (!job.parts?.length) {
+      job.parts = [{ index: 0, start: 0, end: Math.max(0, job.totalBytes - 1), done: false, bytes: 0 }];
+      job.parallel = false;
+    }
+    const concurrency = job.parallel ? Math.min(6, Math.max(2, Number(job.concurrency || 4))) : 1;
+    let nextIndex = 0;
+    const workers = Array.from({ length: concurrency }, async () => {
+      while (nextIndex < job.parts.length) {
+        const part = job.parts[nextIndex];
+        nextIndex += 1;
+        await downloadDesktopPart(job, part, controller);
+      }
+    });
+    await Promise.all(workers);
+    await combineDesktopParts(job);
+    job.status = 'completed';
+    job.completedAt = new Date().toISOString();
+    job.updatedAt = job.completedAt;
+    saveDesktopDownloadState(job);
+    emitDesktopDownload(job);
+    if (Notification.isSupported()) new Notification({ title: 'PL CHAT', body: `ดาวน์โหลดเสร็จแล้ว: ${job.fileName}` }).show();
+  } catch (error) {
+    if (controller.signal.aborted || job.status === 'paused') {
+      job.status = 'paused';
+      job.error = null;
+    } else if (job.parallel && Array.isArray(job.fallbackConcurrency) && job.fallbackConcurrency.length) {
+      const nextConcurrency = Number(job.fallbackConcurrency.shift() || 1);
+      resetDesktopDownloadParts(job, nextConcurrency);
+      job.status = 'queued';
+      job.error = `retrying_with_concurrency_${nextConcurrency}`;
+      job.updatedAt = new Date().toISOString();
+      saveDesktopDownloadState(job);
+      emitDesktopDownload(job);
+      setTimeout(() => runDesktopDownload(job.id), 250);
+    } else {
+      job.status = 'failed';
+      job.error = error?.message || 'download_failed';
+    }
+    job.updatedAt = new Date().toISOString();
+    saveDesktopDownloadState(job);
+    emitDesktopDownload(job);
+  } finally {
+    desktopDownloadControllers.delete(jobId);
+  }
+  return publicDownloadJob(job);
+}
+
+ipcMain.handle('plchat:download:start', async (_event, payload = {}) => {
+  const targetUrl = String(payload.url || '').trim();
+  const parsed = new URL(targetUrl);
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('invalid_download_url');
+  const headers = await fetchHeaders(targetUrl);
+  const totalBytes = Number(payload.expectedBytes || headers.contentLength || 0);
+  const connectionPlan = desktopDownloadConnectionPlan(targetUrl, totalBytes);
+  const parallelAllowed = Boolean(payload.parallel !== false && totalBytes >= 64 * 1024 * 1024 && (headers.acceptRanges || parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'));
+  const initialConcurrency = parallelAllowed ? connectionPlan.concurrency : 1;
+  const id = `dl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  const fileName = safeDownloadName(payload.fileName || path.basename(parsed.pathname) || 'download.bin');
+  const job = {
+    id,
+    url: targetUrl,
+    fileName,
+    destination: uniqueDownloadPath(fileName),
+    totalBytes,
+    expectedSha256: payload.sha256 || '',
+    status: 'queued',
+    parallel: parallelAllowed,
+    concurrency: initialConcurrency,
+    fallbackConcurrency: parallelAllowed ? connectionPlan.fallbackConcurrency : [],
+    route: connectionPlan.route,
+    downloadedBytes: 0,
+    parts: parallelAllowed ? makeDesktopParts(totalBytes, initialConcurrency) : [{ index: 0, start: 0, end: Math.max(0, totalBytes - 1), done: false, bytes: 0 }],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  desktopDownloadJobs.set(id, job);
+  saveDesktopDownloadState(job);
+  emitDesktopDownload(job);
+  runDesktopDownload(id);
+  return { ok: true, job: publicDownloadJob(job) };
+});
+
+ipcMain.handle('plchat:download:pause', (_event, id) => {
+  const job = desktopDownloadJobs.get(String(id));
+  if (!job) throw new Error('download_not_found');
+  job.status = 'paused';
+  desktopDownloadControllers.get(job.id)?.abort();
+  saveDesktopDownloadState(job);
+  emitDesktopDownload(job);
+  return publicDownloadJob(job);
+});
+
+ipcMain.handle('plchat:download:resume', (_event, id) => {
+  const job = desktopDownloadJobs.get(String(id));
+  if (!job) throw new Error('download_not_found');
+  runDesktopDownload(job.id);
+  return publicDownloadJob(job);
+});
+
+ipcMain.handle('plchat:download:list', () => {
+  const state = readDesktopDownloadState();
+  for (const job of state.jobs) if (!desktopDownloadJobs.has(job.id)) desktopDownloadJobs.set(job.id, job);
+  return state.jobs.map(publicDownloadJob);
+});
+
+function createWindow() {
+  const state = safeReadJson(windowStatePath(), DEFAULT_WINDOW_STATE);
+  mainWindow = new BrowserWindow({
+    width: Number(state.width) || DEFAULT_WINDOW_STATE.width,
+    height: Number(state.height) || DEFAULT_WINDOW_STATE.height,
+    x: Number.isFinite(state.x) ? state.x : undefined,
+    y: Number.isFinite(state.y) ? state.y : undefined,
+    minWidth: 960,
+    minHeight: 640,
+    title: APP_NAME,
+    backgroundColor: '#F6F7F4',
+    icon: path.join(__dirname, '..', 'assets', 'icon.png'),
+    show: false,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      preload: path.join(__dirname, 'preload.cjs')
+    }
+  });
+
+  if (state.maximized) mainWindow.maximize();
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (isSafeExternalUrl(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    const allowed = webContents.id === mainWindow.webContents.id
+      && permission === 'notifications'
+      && isAllowedAppNavigation(webContents.getURL());
+    callback(allowed);
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (isAllowedAppNavigation(url)) return;
+    event.preventDefault();
+    if (isSafeExternalUrl(url)) shell.openExternal(url);
+  });
+
+  mainWindow.webContents.on('will-attach-webview', (event) => event.preventDefault());
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, _description, validatedUrl, isMainFrame) => {
+    if (isMainFrame && errorCode !== -3 && !validatedUrl.startsWith(pathToFileURL(path.join(__dirname, 'offline.html')).toString())) showOfflinePage();
+  });
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('plchat:desktop-preferences', readPreferences());
+  });
+
+  mainWindow.on('ready-to-show', () => mainWindow.show());
+  mainWindow.on('resize', scheduleWindowStateSave);
+  mainWindow.on('move', scheduleWindowStateSave);
+  mainWindow.on('minimize', (event) => {
+    if (readPreferences().minimizeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
+  mainWindow.on('close', (event) => {
+    if (!isQuitting && readPreferences().minimizeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+      return;
+    }
+    saveCurrentWindowState();
+  });
+  mainWindow.on('closed', () => {
+    mainWindow = undefined;
+  });
+
+  loadWorkspace();
+}
+
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', showMainWindow);
+  app.whenReady().then(() => {
+    app.setName(APP_NAME);
+    if (process.platform === 'win32') app.setAppUserModelId('com.plchat.app');
+    Menu.setApplicationMenu(null);
+    syncStartWithWindows(readPreferences().startWithWindows);
+    createWindow();
+    createTray();
+
+    app.on('activate', showMainWindow);
+  });
+}
+
+ipcMain.handle('plchat:retry-load', () => loadWorkspace());
+ipcMain.handle('plchat:show-native-notification', (_event, payload) => showNativeNotification(payload));
+ipcMain.handle('plchat:get-desktop-info', () => ({
+  appUrl: getAppUrl(),
+  defaultAppUrl: DEFAULT_APP_URL,
+  configPath: desktopConfigPath(),
+  bundledConfigPath: bundledConfigPath(),
+  appVersion: app.getVersion(),
+  isPackaged: app.isPackaged,
+  platform: process.platform,
+  deploymentMode: 'lan-only-v1',
+  updateMode: UPDATE_MODE,
+  preferences: readPreferences()
+}));
+
+ipcMain.handle('plchat:set-desktop-server-url', (_event, payload = {}) => {
+  const appUrl = validAppUrl(payload.appUrl);
+  if (!appUrl) {
+    return { ok: false, error: 'invalid_app_url', appUrl: getAppUrl(), configPath: desktopConfigPath() };
+  }
+  saveDesktopConfig({ appUrl, updatedAt: new Date().toISOString() });
+  appendUpdateHistory('server-url-updated', { appUrl });
+  return { ok: true, appUrl: getAppUrl(), configPath: desktopConfigPath() };
+});
+
+ipcMain.handle('plchat:updater:get-app-version', (event) => {
+  assertDesktopUpdaterRuntime(event);
+  return { ok: true, version: app.getVersion(), platform: process.platform, isPackaged: app.isPackaged, updateMode: UPDATE_MODE };
+});
+
+ipcMain.handle('plchat:updater:check-for-updates', (event) => {
+  assertDesktopUpdaterRuntime(event);
+  const status = saveUpdateStatus({
+    state: 'manual',
+    available: false,
+    version: null,
+    downloaded: false,
+    lastCheckedAt: new Date().toISOString(),
+    message: 'LAN-only v1 is updated by installing the latest PL CHAT Setup from the administrator.'
+  });
+  appendUpdateHistory('manual-update-check', { available: status.available, updateMode: UPDATE_MODE });
+  return { ok: true, status };
+});
+
+ipcMain.handle('plchat:updater:download-update', (event) => {
+  assertDesktopUpdaterRuntime(event);
+  const current = readUpdateStatus();
+  const status = saveUpdateStatus({ ...current, state: 'manual', available: false, downloaded: false, message: 'Download is managed by the LAN administrator. Ask for the latest PL CHAT Setup installer.' });
+  return { ok: false, error: 'manual_update_required', status };
+});
+
+ipcMain.handle('plchat:updater:install-update', (event) => {
+  assertDesktopUpdaterRuntime(event);
+  const status = saveUpdateStatus({ ...readUpdateStatus(), state: 'manual', available: false, downloaded: false, message: 'Install updates by running the newest PL CHAT Setup installer from the administrator.' });
+  appendUpdateHistory('manual-install-help');
+  return { ok: false, error: 'manual_update_required', status };
+});
+
+ipcMain.handle('plchat:updater:restart-and-install', (event) => {
+  assertDesktopUpdaterRuntime(event);
+  const status = saveUpdateStatus({ ...readUpdateStatus(), state: 'manual', available: false, downloaded: false, message: 'Restart/install is disabled in LAN-only v1. Close PL CHAT, run the new installer, then reopen the app.' });
+  appendUpdateHistory('manual-restart-install-help');
+  return { ok: false, error: 'manual_update_required', status };
+});
+
+ipcMain.handle('plchat:updater:get-update-status', (event) => {
+  assertDesktopUpdaterRuntime(event);
+  return { ok: true, status: readUpdateStatus() };
+});
+
+ipcMain.handle('plchat:updater:get-update-history', (event) => {
+  assertDesktopUpdaterRuntime(event);
+  const data = safeReadJson(updateHistoryPath(), { items: [] });
+  return { ok: true, history: Array.isArray(data.items) ? data.items : [] };
+});
+
+ipcMain.handle('plchat:set-desktop-preferences', (_event, patch = {}) => {
+  const allowedPatch = {};
+  for (const key of ['minimizeToTray', 'notificationsEnabled', 'doNotDisturb', 'startWithWindows']) {
+    if (Object.prototype.hasOwnProperty.call(patch, key)) allowedPatch[key] = Boolean(patch[key]);
+  }
+  const preferences = savePreferences(allowedPatch);
+  syncStartWithWindows(preferences.startWithWindows);
+  refreshTrayMenu();
+  mainWindow?.webContents.send('plchat:desktop-preferences', preferences);
+  return preferences;
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
+  saveCurrentWindowState();
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform === 'darwin') return;
+  if (!readPreferences().minimizeToTray) app.quit();
+});

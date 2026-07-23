@@ -1,0 +1,614 @@
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
+
+const require = createRequire(import.meta.url);
+
+function iso(value) {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  return new Date(value).toISOString();
+}
+
+function roomType(value) {
+  const type = String(value || '').toLowerCase();
+  if (type === 'direct') return 'private';
+  if (type === 'channel') return 'channel';
+  return 'group';
+}
+
+function uploadExtension(name) {
+  const value = String(name || '');
+  const dot = value.lastIndexOf('.');
+  return dot >= 0 ? value.slice(dot).toLowerCase().slice(0, 24) : '';
+}
+
+function safePreview(file, previewMode) {
+  if (!file || file.deletedAt || previewMode !== 'safe-only') return false;
+  const type = String(file.mimeType || '').toLowerCase();
+  const extension = String(file.extension || uploadExtension(file.originalName)).toLowerCase();
+  if (type.startsWith('image/') && ['.png', '.jpg', '.jpeg', '.webp', '.gif'].includes(extension)) return true;
+  if (type === 'application/pdf' || extension === '.pdf') return true;
+  if (type.startsWith('text/') || ['.txt', '.csv'].includes(extension)) return true;
+  return false;
+}
+
+function fileCategory(file) {
+  const ext = String(file.extension || uploadExtension(file.originalName)).toLowerCase();
+  const type = String(file.mimeType || '').toLowerCase();
+  if (type.startsWith('image/') || ['.tif', '.tiff', '.png', '.jpg', '.jpeg', '.webp', '.svg'].includes(ext)) return 'images';
+  if (['.psd', '.ai', '.eps', '.dwg', '.dxf', '.fig', '.sketch'].includes(ext)) return 'design';
+  if (['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv', '.json', '.xml'].includes(ext)) return 'documents';
+  if (['.zip', '.rar', '.7z'].includes(ext)) return 'archives';
+  if (type.startsWith('video/') || type.startsWith('audio/') || ['.mp4', '.mov', '.avi', '.webm', '.mp3', '.wav'].includes(ext)) return 'media';
+  return 'other';
+}
+
+function numberFromBigInt(value) {
+  if (typeof value === 'bigint') return Number(value);
+  return Number(value || 0);
+}
+
+export function createDbRepository(options) {
+  const {
+    rootDir,
+    organizationId,
+    filePreviewMode = 'safe-only',
+    fileUploadMode = 'universal',
+    maxUploadBytes = 0
+  } = options;
+
+  const readMode = String(process.env.PL_CHAT_DATA_READ_MODE || 'json').toLowerCase();
+  const enabled = ['db', 'dual'].includes(readMode) && Boolean(process.env.DATABASE_URL);
+  const retryMs = Number(process.env.PL_CHAT_DB_RETRY_MS || 30000);
+  let prisma = null;
+  let lastError = null;
+  let nextRetryAt = 0;
+  let lastWarningAt = 0;
+  let lastWarningMessage = '';
+
+  function rememberDbError(name, error) {
+    lastError = error;
+    nextRetryAt = Date.now() + retryMs;
+    const message = error?.message || String(error || 'db_unavailable');
+    const shouldWarn = message !== lastWarningMessage || Date.now() - lastWarningAt > 60000;
+    if (shouldWarn) {
+      console.warn(`PL CHAT DB repository fallback (${name}):`, message);
+      lastWarningAt = Date.now();
+      lastWarningMessage = message;
+    }
+  }
+
+  async function getPrisma() {
+    if (!enabled) return null;
+    if (lastError && Date.now() < nextRetryAt) return null;
+    if (prisma) return prisma;
+    try {
+      const clientPath = join(rootDir, 'apps', 'api', 'node_modules', '@prisma', 'client');
+      const { PrismaClient } = require(clientPath);
+      prisma = new PrismaClient();
+      return prisma;
+    } catch (error) {
+      rememberDbError('connect', error);
+      return null;
+    }
+  }
+
+  async function read(name, fn) {
+    const client = await getPrisma();
+    if (!client) return null;
+    try {
+      return await fn(client);
+    } catch (error) {
+      rememberDbError(name, error);
+      return null;
+    }
+  }
+
+  function mapRoom(room, user) {
+    const memberIds = room.members.map((member) => member.userId);
+    const member = room.members.find((item) => item.userId === user.id);
+    return {
+      id: room.legacyRoomId || room.id,
+      name: room.title || 'PL CHAT Room',
+      type: roomType(room.type),
+      ownerId: room.ownerId || null,
+      memberIds,
+      memberCount: memberIds.length,
+      description: room.description || '',
+      avatar: room.avatar || '',
+      avatarFileId: room.avatarFileId || null,
+      archivedAt: iso(room.archivedAt),
+      deletedAt: iso(room.deletedAt),
+      canManage: Boolean(user.isAdmin || ['OWNER', 'ADMIN'].includes(member?.role || '')),
+      pinned: false,
+      createdAt: iso(room.createdAt)
+    };
+  }
+
+  function mapUser(user) {
+    const profile = user.profile || {};
+    const presence = user.presence || {};
+    const status = String(presence.status || 'OFFLINE').toLowerCase();
+    return {
+      id: user.id,
+      name: profile.displayName || user.email?.split('@')[0] || 'Member',
+      displayName: profile.displayName || user.email?.split('@')[0] || 'Member',
+      email: user.email,
+      emailVerifiedAt: iso(user.emailVerifiedAt),
+      isAdmin: ['ADMIN', 'SUPER_ADMIN'].includes(user.role),
+      bio: profile.bio || '',
+      avatar: profile.avatarUrl || '',
+      avatarFileId: null,
+      cover: profile.coverUrl || '',
+      coverFileId: null,
+      department: '',
+      jobTitle: '',
+      accentColor: '',
+      favoriteQuote: profile.publicLink || '',
+      workMood: profile.statusText || '',
+      statusMessage: profile.statusText || '',
+      presence: {
+        status,
+        label: status === 'online' ? 'ออนไลน์' : status === 'away' ? 'ไม่อยู่' : status === 'busy' ? 'ไม่ว่าง' : 'ออฟไลน์',
+        lastSeenAt: iso(presence.lastSeenAt),
+        updatedAt: iso(presence.updatedAt)
+      },
+      createdAt: iso(user.createdAt)
+    };
+  }
+
+  function mapFile(file) {
+    const roomId = file.conversation?.legacyRoomId || file.conversationId || null;
+    const uploaderName = file.uploader?.profile?.displayName || file.uploader?.email || 'Unknown user';
+    const size = numberFromBigInt(file.byteSize);
+    return {
+      id: file.id,
+      organizationId: file.organizationId,
+      conversationId: file.conversationId,
+      roomId,
+      postId: file.postId || null,
+      messageId: null,
+      name: file.originalName,
+      originalName: file.originalName,
+      type: file.mimeType || 'application/octet-stream',
+      mimeType: file.mimeType || 'application/octet-stream',
+      extension: file.extension || uploadExtension(file.originalName),
+      size,
+      byteSize: size,
+      uploaderId: file.uploaderId,
+      uploaderName,
+      roomName: file.conversation?.title || '',
+      canPreview: safePreview(file, filePreviewMode),
+      previewUrl: `/api/files/${file.id}/preview`,
+      downloadUrl: `/api/files/${file.id}/download`,
+      shareUrl: `/api/files/${file.id}/share`,
+      createdAt: iso(file.uploadedAt),
+      deletedAt: iso(file.deletedAt)
+    };
+  }
+
+  function mapMessage(message, user) {
+    const sender = message.sender ? mapUser(message.sender) : null;
+    const attachment = message.productionAttachments?.[0]?.file ? mapFile(message.productionAttachments[0].file) : null;
+    const reactions = (message.reactions || []).map((reaction) => ({
+      id: reaction.id,
+      messageId: reaction.messageId,
+      userId: reaction.userId,
+      emoji: reaction.emoji,
+      createdAt: iso(reaction.createdAt)
+    }));
+    const recipients = (message.room?.members || [])
+      .filter((member) => member.userId !== message.senderId && member.user)
+      .map((member) => member.user);
+    const readIds = new Set((message.reads || []).map((receipt) => receipt.userId));
+    const readBy = [
+      ...(message.sender ? [mapUser(message.sender)] : []),
+      ...recipients.filter((member) => readIds.has(member.id)).map(mapUser)
+    ];
+    const unreadBy = recipients.filter((member) => !readIds.has(member.id)).map(mapUser);
+    return {
+      id: message.id,
+      roomId: message.roomId,
+      roomMemberIds: (message.room?.members || []).map((member) => member.userId),
+      userId: message.senderId,
+      name: sender?.name || 'Member',
+      text: message.deletedAt ? '' : message.body || '',
+      attachment: message.deletedAt ? null : attachment,
+      reactions: message.deletedAt ? [] : reactions,
+      replyToId: null,
+      forwardedFromId: null,
+      deletedForUserIds: [],
+      sender,
+      replyTo: null,
+      forwardedFrom: null,
+      deletedForMe: false,
+      edited: Boolean(message.editedAt),
+      deleted: Boolean(message.deletedAt),
+      createdAt: iso(message.createdAt),
+      updatedAt: iso(message.updatedAt),
+      readState: {
+        isRead: unreadBy.length === 0,
+        label: unreadBy.length === 0 ? 'อ่านแล้ว' : 'ยังไม่อ่าน',
+        readByCount: readBy.length,
+        unreadCount: unreadBy.length,
+        readBy,
+        unreadBy
+      },
+      canManage: !message.deletedAt && (message.senderId === user.id || user.isAdmin)
+    };
+  }
+
+  function mapPostComment(comment, user) {
+    const author = comment.user ? mapUser(comment.user) : null;
+    return {
+      id: comment.id,
+      postId: comment.postId,
+      text: comment.text,
+      author,
+      reactions: [],
+      reactionCount: 0,
+      edited: iso(comment.updatedAt) !== iso(comment.createdAt),
+      createdAt: iso(comment.createdAt),
+      updatedAt: iso(comment.updatedAt),
+      canManage: comment.userId === user.id || user.isAdmin
+    };
+  }
+
+  function mapPost(post, user) {
+    const author = post.user ? mapUser(post.user) : null;
+    const attachment = post.attachmentFile ? mapFile(post.attachmentFile) : null;
+    const comments = (post.comments || [])
+      .filter((comment) => !comment.deletedAt)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .map((comment) => mapPostComment(comment, user));
+    const reactions = (post.reactions || []).map((reaction) => ({
+      id: reaction.id,
+      postId: reaction.postId,
+      userId: reaction.userId,
+      emoji: reaction.emoji,
+      createdAt: iso(reaction.createdAt)
+    }));
+    return {
+      id: post.id,
+      userId: post.userId,
+      authorId: post.userId,
+      profileOwnerId: post.userId,
+      text: post.text || '',
+      content: post.text || '',
+      visibility: 'organization',
+      pinnedAt: iso(post.pinnedAt),
+      attachmentId: post.attachmentFileId || null,
+      attachment,
+      author,
+      comments,
+      reactions,
+      reactionCount: reactions.length,
+      commentCount: comments.length,
+      edited: iso(post.updatedAt) !== iso(post.createdAt),
+      canManage: post.userId === user.id || user.isAdmin,
+      createdAt: iso(post.createdAt),
+      updatedAt: iso(post.updatedAt)
+    };
+  }
+
+  function mapNotification(notification) {
+    return {
+      id: notification.id,
+      type: notification.targetType || 'notification',
+      title: notification.title,
+      message: notification.body,
+      entityType: notification.targetType || '',
+      entityId: notification.targetId || '',
+      roomId: notification.room?.id || notification.conversation?.legacyRoomId || notification.conversationId || '',
+      targetUrl: notification.targetUrl || '',
+      targetUserId: notification.targetType === 'user' ? notification.targetId : null,
+      targetPostId: notification.targetType === 'post' ? notification.targetId : null,
+      targetFileId: notification.targetType === 'file' ? notification.targetId : null,
+      targetMessageId: notification.messageId || (notification.targetType === 'message' ? notification.targetId : null),
+      readAt: iso(notification.readAt),
+      createdAt: iso(notification.createdAt)
+    };
+  }
+
+  return {
+    readMode,
+    enabled,
+
+    async status() {
+      if (!enabled) {
+        return {
+          mode: readMode,
+          enabled: false,
+          connected: false,
+          source: 'json',
+          reason: process.env.DATABASE_URL ? 'db_reads_disabled' : 'missing_database_url'
+        };
+      }
+      const result = await read('status', async (client) => {
+        await client.$queryRaw`SELECT 1`;
+        return true;
+      });
+      return {
+        mode: readMode,
+        enabled: true,
+        connected: Boolean(result),
+        source: result ? 'db' : 'json-fallback',
+        reason: result ? null : lastError?.message || 'db_unavailable'
+      };
+    },
+
+    async listUsers(user, filters = {}) {
+      return read('listUsers', async (client) => {
+        const q = String(filters.q || '').trim();
+        const status = String(filters.status || '').trim().toUpperCase();
+        const users = await client.user.findMany({
+          where: {
+            organizationId,
+            deletedAt: null,
+            ...(q ? {
+              OR: [
+                { email: { contains: q, mode: 'insensitive' } },
+                { profile: { is: { displayName: { contains: q, mode: 'insensitive' } } } },
+                { profile: { is: { bio: { contains: q, mode: 'insensitive' } } } }
+              ]
+            } : {}),
+            ...(status ? { presence: { is: { status } } } : {})
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 250,
+          include: { profile: true, presence: true }
+        });
+        return users.map(mapUser);
+      });
+    },
+
+    async getUserProfile(profileUserId, viewer) {
+      return read('getUserProfile', async (client) => {
+        const profileUser = await client.user.findFirst({
+          where: { id: profileUserId, organizationId, deletedAt: null },
+          include: { profile: true, presence: true }
+        });
+        if (!profileUser) return null;
+        const posts = await client.profilePost.findMany({
+          where: { organizationId, userId: profileUser.id, deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          take: 30,
+          include: {
+            user: { include: { profile: true, presence: true } },
+            attachmentFile: { include: { uploader: { include: { profile: true } }, conversation: true } },
+            comments: {
+              include: { user: { include: { profile: true, presence: true } } },
+              orderBy: { createdAt: 'asc' }
+            },
+            reactions: true
+          }
+        });
+        const files = await client.file.findMany({
+          where: {
+            organizationId,
+            uploaderId: profileUser.id,
+            deletedAt: null,
+            OR: [
+              { uploaderId: viewer.id },
+              { conversation: { members: { some: { userId: viewer.id, leftAt: null } } } },
+              { conversationId: null }
+            ]
+          },
+          orderBy: { uploadedAt: 'desc' },
+          take: 20,
+          include: {
+            uploader: { include: { profile: true } },
+            conversation: true
+          }
+        });
+        return {
+          user: mapUser(profileUser),
+          posts: posts.map((post) => mapPost(post, viewer)),
+          files: files.map(mapFile)
+        };
+      });
+    },
+
+    async listFeed(user, { limit = 50 } = {}) {
+      return read('listFeed', async (client) => {
+        const posts = await client.profilePost.findMany({
+          where: { organizationId, deletedAt: null },
+          orderBy: [{ pinnedAt: 'desc' }, { createdAt: 'desc' }],
+          take: Math.min(Number(limit || 50), 100),
+          include: {
+            user: { include: { profile: true, presence: true } },
+            attachmentFile: { include: { uploader: { include: { profile: true } }, conversation: true } },
+            comments: {
+              include: { user: { include: { profile: true, presence: true } } },
+              orderBy: { createdAt: 'asc' }
+            },
+            reactions: true
+          }
+        });
+        const activePeople = await client.user.findMany({
+          where: { organizationId, deletedAt: null, presence: { is: { status: 'ONLINE' } } },
+          orderBy: { updatedAt: 'desc' },
+          take: 12,
+          include: { profile: true, presence: true }
+        });
+        const latestFiles = await client.file.findMany({
+          where: {
+            organizationId,
+            deletedAt: null,
+            OR: [
+              { uploaderId: user.id },
+              { conversation: { members: { some: { userId: user.id, leftAt: null } } } }
+            ]
+          },
+          orderBy: { uploadedAt: 'desc' },
+          take: 12,
+          include: {
+            uploader: { include: { profile: true } },
+            conversation: true
+          }
+        });
+        return {
+          posts: posts.map((post) => mapPost(post, user)),
+          activePeople: activePeople.map(mapUser),
+          latestFiles: latestFiles.map(mapFile)
+        };
+      });
+    },
+
+    async listRooms(user) {
+      return read('listRooms', async (client) => {
+        const rooms = await client.conversation.findMany({
+          where: {
+            organizationId,
+            deletedAt: null,
+            archivedAt: null,
+            members: { some: { userId: user.id, leftAt: null } }
+          },
+          orderBy: { updatedAt: 'desc' },
+          take: 100,
+          include: { members: { where: { leftAt: null } } }
+        });
+        return rooms.map((room) => mapRoom(room, user));
+      });
+    },
+
+    async listMessages(user, roomId, { since = null, limit = 200 } = {}) {
+      return read('listMessages', async (client) => {
+        const room = await client.chatRoom.findFirst({
+          where: {
+            id: roomId,
+            deletedAt: null,
+            members: { some: { userId: user.id, leftAt: null } }
+          },
+          include: { members: { where: { leftAt: null } } }
+        });
+        if (!room) return null;
+        const messages = await client.message.findMany({
+          where: {
+            roomId,
+            ...(since ? { createdAt: { gt: new Date(since) } } : {})
+          },
+          orderBy: { createdAt: 'desc' },
+          take: Math.min(Number(limit || 200), 500),
+          include: {
+            sender: { include: { profile: true, presence: true } },
+            reactions: true,
+            reads: true,
+            room: {
+              include: {
+                members: {
+                  where: { leftAt: null },
+                  include: { user: { include: { profile: true, presence: true } } }
+                }
+              }
+            },
+            productionAttachments: {
+              include: {
+                file: {
+                  include: {
+                    uploader: { include: { profile: true } },
+                    conversation: true
+                  }
+                }
+              }
+            }
+          }
+        });
+        return messages.reverse().map((message) => mapMessage(message, user));
+      });
+    },
+
+    async markMessagesRead(user, messageIds = []) {
+      const ids = [...new Set(messageIds.map(String).filter(Boolean))].slice(0, 200);
+      if (!ids.length) return { marked: 0, rooms: [] };
+      return read('markMessagesRead', async (client) => {
+        const messages = await client.message.findMany({
+          where: {
+            id: { in: ids },
+            senderId: { not: user.id },
+            deletedAt: null,
+            room: { members: { some: { userId: user.id, leftAt: null } } }
+          },
+          select: {
+            id: true,
+            roomId: true,
+            room: { select: { members: { where: { leftAt: null }, select: { userId: true } } } }
+          }
+        });
+        if (!messages.length) return { marked: 0, rooms: [] };
+        await client.$transaction(messages.map((message) => client.readReceipt.upsert({
+          where: { messageId_userId: { messageId: message.id, userId: user.id } },
+          update: { readAt: new Date() },
+          create: { messageId: message.id, userId: user.id }
+        })));
+        const rooms = [...new Map(messages.map((message) => [
+          message.roomId,
+          { roomId: message.roomId, memberIds: message.room.members.map((member) => member.userId) }
+        ])).values()];
+        return { marked: messages.length, rooms };
+      });
+    },
+
+    async listFiles(user, filters = {}) {
+      return read('listFiles', async (client) => {
+        const where = {
+          organizationId,
+          deletedAt: null,
+          ...(filters.q ? { originalName: { contains: filters.q, mode: 'insensitive' } } : {}),
+          ...(filters.extension ? { extension: filters.extension } : {}),
+          ...(filters.uploaderId ? { uploaderId: filters.uploaderId } : {}),
+          ...(filters.mine ? { uploaderId: user.id } : {}),
+          ...(filters.roomId ? { conversation: { legacyRoomId: filters.roomId } } : {}),
+          OR: [
+            { uploaderId: user.id },
+            { conversation: { members: { some: { userId: user.id, leftAt: null } } } }
+          ]
+        };
+        const files = await client.file.findMany({
+          where,
+          orderBy: { uploadedAt: 'desc' },
+          take: 200,
+          include: {
+            uploader: { include: { profile: true } },
+            conversation: true
+          }
+        });
+        return files
+          .filter((file) => !filters.category || filters.category === 'all' || fileCategory(file) === filters.category)
+          .map(mapFile);
+      });
+    },
+
+    async listNotifications(user) {
+      return read('listNotifications', async (client) => {
+        const notifications = await client.notification.findMany({
+          where: { organizationId, userId: user.id },
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+          include: {
+            room: true,
+            conversation: true
+          }
+        });
+        return notifications.map(mapNotification);
+      });
+    },
+
+    async disconnect() {
+      if (!prisma) return;
+      await prisma.$disconnect();
+      prisma = null;
+    },
+
+    meta() {
+      return {
+        mode: readMode,
+        enabled,
+        source: enabled ? 'db-optional' : 'json',
+        uploadMaxMb: maxUploadBytes / 1024 / 1024,
+        fileUploadMode,
+        filePreviewMode
+      };
+    }
+  };
+}

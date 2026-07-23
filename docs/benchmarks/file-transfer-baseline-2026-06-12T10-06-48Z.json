@@ -1,0 +1,90 @@
+{
+  "title": "PL CHAT File Transfer Benchmark Baseline",
+  "status": "passed",
+  "startedAt": "2026-06-12T10:06:48.520Z",
+  "finishedAt": "2026-06-12T10:06:50.392Z",
+  "scope": "Local loopback baseline only; no chat messages created and no user files modified.",
+  "baseUrl": "http://localhost:8788",
+  "user": {},
+  "roomId": "d8c4315a4166a464a33c0cc7",
+  "configuration": {
+    "directMb": 8,
+    "chunkMb": 128,
+    "rangeMb": 8,
+    "runs": 1,
+    "serverChunkSizeMb": 64,
+    "serverUploadMaxMb": 20480,
+    "serverDirectUploadMaxMb": 100
+  },
+  "averages": {
+    "direct": {
+      "runs": 1,
+      "averageMbPerSecond": 54.37
+    },
+    "download": {
+      "runs": 1,
+      "averageMbPerSecond": 55.63
+    },
+    "chunked": {
+      "runs": 1,
+      "averageMbPerSecond": 130.13
+    },
+    "range": {
+      "runs": 1,
+      "averageMbPerSecond": 56.75
+    }
+  },
+  "results": [
+    {
+      "label": "health-check",
+      "bytes": 0,
+      "sizeMb": 0,
+      "elapsedMs": 40.89,
+      "throughputMbPerSecond": 0,
+      "clientRssDeltaMb": 8.13
+    },
+    {
+      "label": "direct-upload-run-1",
+      "bytes": 8388608,
+      "sizeMb": 8,
+      "elapsedMs": 147.15,
+      "throughputMbPerSecond": 54.37,
+      "clientRssDeltaMb": 18.19,
+      "transport": "direct"
+    },
+    {
+      "label": "full-download-run-1",
+      "bytes": 8388608,
+      "sizeMb": 8,
+      "elapsedMs": 143.82,
+      "throughputMbPerSecond": 55.63,
+      "clientRssDeltaMb": 23.98,
+      "transport": "download"
+    },
+    {
+      "label": "chunk-upload-run-1",
+      "bytes": 134217728,
+      "sizeMb": 128,
+      "elapsedMs": 983.6,
+      "throughputMbPerSecond": 130.13,
+      "clientRssDeltaMb": 318.94,
+      "transport": "chunked",
+      "chunkSizeMb": 64
+    },
+    {
+      "label": "range-download-run-1",
+      "bytes": 8388608,
+      "sizeMb": 8,
+      "elapsedMs": 140.96,
+      "throughputMbPerSecond": 56.75,
+      "clientRssDeltaMb": 23.91,
+      "transport": "range"
+    }
+  ],
+  "cleanup": {
+    "uploadedBenchmarkFiles": 2,
+    "requestedSoftDeleteForAll": true,
+    "localTemporaryFilesRemoved": true
+  },
+  "error": null
+}

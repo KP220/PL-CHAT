@@ -1,0 +1,45 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: plchat-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: plchat-minio-init
+    depends_on:
+      - minio
+    environment:
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET:-plchat-files}
+    volumes:
+      - ./infra/minio/cors.xml:/config/cors.xml:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set plchat http://minio:9000 "$$S3_ACCESS_KEY_ID" "$$S3_SECRET_ACCESS_KEY"; do
+          echo "Waiting for MinIO..."
+          sleep 2
+        done
+        until mc ready plchat; do
+          echo "Waiting for MinIO readiness..."
+          sleep 2
+        done
+        mc mb --ignore-existing "plchat/$$S3_BUCKET"
+        mc anonymous set none "plchat/$$S3_BUCKET"
+        mc cors set "plchat/$$S3_BUCKET" /config/cors.xml
+        mc version enable "plchat/$$S3_BUCKET"
+
+volumes:
+  minio-data:

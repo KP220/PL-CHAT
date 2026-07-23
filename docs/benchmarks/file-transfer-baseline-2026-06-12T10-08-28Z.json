@@ -1,0 +1,35 @@
+{
+  "title": "PL CHAT File Transfer Benchmark Baseline",
+  "status": "failed",
+  "startedAt": "2026-06-12T10:08:28.431Z",
+  "finishedAt": "2026-06-12T10:08:28.666Z",
+  "scope": "Local loopback baseline only; no chat messages created and no user files modified.",
+  "baseUrl": "http://localhost:8788",
+  "user": null,
+  "configuration": {
+    "directMb": 8,
+    "chunkMb": 128,
+    "rangeMb": 8,
+    "runs": 3,
+    "serverChunkSizeMb": 64,
+    "serverUploadMaxMb": 20480,
+    "serverDirectUploadMaxMb": 100
+  },
+  "averages": {},
+  "results": [
+    {
+      "label": "health-check",
+      "bytes": 0,
+      "sizeMb": 0,
+      "elapsedMs": 158.78,
+      "throughputMbPerSecond": 0,
+      "clientRssDeltaMb": 8.01
+    }
+  ],
+  "cleanup": {
+    "uploadedBenchmarkFiles": 0,
+    "requestedSoftDeleteForAll": true,
+    "localTemporaryFilesRemoved": true
+  },
+  "error": "Expected property name or '}' in JSON at position 12491402 (line 416224 column 4)"
+}
